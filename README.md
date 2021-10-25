@@ -27,30 +27,21 @@ dotnet add package Jaina
 1. 定义事件订阅者 `ToDoEventSubscriber`：
 
 ```cs
-using Jaina.EventBus;
-using Microsoft.Extensions.Logging;
-using System.Threading.Tasks;
-
-namespace Jaina.Samples
+// 实现 IEventSubscriber 接口
+public class ToDoEventSubscriber : IEventSubscriber
 {
-    // 实现 IEventSubscriber 接口
-    public class ToDoEventSubscriber : IEventSubscriber
+    private readonly ILogger<ToDoEventSubscriber> _logger;
+    public ToDoEventSubscriber(ILogger<ToDoEventSubscriber> logger)
     {
-        private readonly ILogger<ToDoEventSubscriber> _logger;
-        public ToDoEventSubscriber(ILogger<ToDoEventSubscriber> logger)
-        {
-            _logger = logger;
-        }
-
-        // 标记 [EventSubscribe(事件 Id)] 特性
-        [EventSubscribe("ToDo:Create")]
-        public async Task CreateToDo(EventHandlerExecutingContext context)
-        {
-            var todo = context.Source;
-
-            _logger.LogInformation("创建一个 ToDo：{Name}", todo.Payload);
-            await Task.CompletedTask;
-        }
+        _logger = logger;
+    }
+    // 标记 [EventSubscribe(事件 Id)] 特性
+    [EventSubscribe("ToDo:Create")]
+    public async Task CreateToDo(EventHandlerExecutingContext context)
+    {
+        var todo = context.Source;
+        _logger.LogInformation("创建一个 ToDo：{Name}", todo.Payload);
+        await Task.CompletedTask;
     }
 }
 ```
@@ -58,29 +49,21 @@ namespace Jaina.Samples
 2. 创建控制器 `ToDoController`，依赖注入 `IEventPublisher` 服务：
 
 ```cs
-using Jaina.EventBus;
-using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
-
-namespace Jaina.Samples.Controllers
+[Route("api/[controller]/[action]")]
+[ApiController]
+public class ToDoController : ControllerBase
 {
-    [Route("api/[controller]/[action]")]
-    [ApiController]
-    public class ToDoController : ControllerBase
+    // 依赖注入事件发布者 IEventPublisher
+    private readonly IEventPublisher _eventPublisher;
+    public ToDoController(IEventPublisher eventPublisher)
     {
-        // 依赖注入事件发布者 IEventPublisher
-        private readonly IEventPublisher _eventPublisher;
-        public ToDoController(IEventPublisher eventPublisher)
-        {
-            _eventPublisher = eventPublisher;
-        }
-
-        // 发布 ToDo:Create 消息
-        [HttpPost]
-        public async Task CreateDoTo(string name)
-        {
-            await _eventPublisher.PublishAsync(new ChannelEventSource("ToDo:Create", name));
-        }
+        _eventPublisher = eventPublisher;
+    }
+    // 发布 ToDo:Create 消息
+    [HttpPost]
+    public async Task CreateDoTo(string name)
+    {
+        await _eventPublisher.PublishAsync(new ChannelEventSource("ToDo:Create", name));
     }
 }
 ```
@@ -88,38 +71,22 @@ namespace Jaina.Samples.Controllers
 3. 在 `Startup.cs` 注册 `EventBus` 服务：
 
 ```cs
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-
-namespace Jaina.Samples
+public class Startup
 {
-    public class Startup
+    public void ConfigureServices(IServiceCollection services)
     {
-        public Startup(IConfiguration configuration)
+        // 注册 EventBus 服务
+        services.AddEventBus(buidler =>
         {
-            Configuration = configuration;
-        }
+            // 注册 ToDo 事件订阅者
+            buidler.AddSubscriber<ToDoEventSubscriber>();
+        });
+        // ....
+    }
 
-        public IConfiguration Configuration { get; }
-
-        public void ConfigureServices(IServiceCollection services)
-        {
-            // 注册 EventBus 服务
-            services.AddEventBus(buidler =>
-            {
-                // 注册 ToDo 事件订阅者
-                buidler.AddSubscriber<ToDoEventSubscriber>();
-            });
-
-            // ....
-        }
-
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-        {
-            // ....
-        }
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    {
+        // ....
     }
 }
 ```
@@ -129,6 +96,199 @@ namespace Jaina.Samples
 ```log
 info: Jaina.Samples.ToDoEventSubscriber[0]
       创建一个 ToDo：Jaina
+```
+
+### 高级教程
+
+**1. 自定义事件源 `IEventSource`**
+
+Jaina 使用 `IEventSource` 作为消息载体，任何实现该接口的类都可以充当消息载体。
+
+如需自定义，只需实现 `IEventSource` 接口即可：
+
+```cs
+public class ToDoEventSource : IEventSource
+{
+    // 自定义属性
+    public string ToDoName { get; }
+
+    /// <summary>
+    /// 事件 Id
+    /// </summary>
+    public string EventId { get; }
+
+    /// <summary>
+    /// 事件承载（携带）数据
+    /// </summary>
+    public object Payload { get; }
+
+    /// <summary>
+    /// 取消任务 Token
+    /// </summary>
+    /// <remarks>用于取消本次消息处理</remarks>
+    public CancellationToken CancellationToken { get; }
+
+    /// <summary>
+    /// 事件创建时间
+    /// </summary>
+    public DateTime CreatedTime { get; } = DateTime.UtcNow; 
+}
+```
+
+使用：
+
+```cs
+await _eventPublisher.PublishAsync(new ToDoEventSource {
+    EventId = "ToDo:Create",
+    ToDoName = "我的 ToDo Name"
+});
+```
+
+**2. 自定义事件源存储器 `IEventSourceStorer`**
+
+Jaina 默认采用 `Channel` 作为事件源 `IEventSource` 存储器，开发者可以使用任何消息队列组件进行替换，如 `Kafka、RabbitMQ、ActiveMQ` 等，也可以使用部分数据库 `Redis、SQL Server、MySql` 实现。
+
+如需自定义，只需实现 `IEventSourceStorer` 接口即可：
+
+```cs
+public class RedisEventSourceStorer : IEventSourceStorer
+{
+    private readonly IRedisClient _redisClient;
+
+    public RedisEventSourceStorer(IRedisClient redisClient)
+    {
+        _redisClient = redisClient;
+    }
+
+    // 往 Redis 中写入一条
+    public async ValueTask WriteAsync(IEventSource eventSource, CancellationToken cancellationToken)
+    {
+        await _redisClient.WriteAsync(...., cancellationToken);
+    }
+    
+    // 从 Redis 中读取一条
+    public async ValueTask<IEventSource> ReadAsync(CancellationToken cancellationToken)
+    {
+       return await _redisClient.ReadAsync(...., cancellationToken);
+    }
+}
+```
+
+最后，在注册 `EventBus` 服务中替换默认 `IEventSourceStorer`：
+
+```cs
+services.AddEventBus(buidler =>
+{
+    // 替换事件源存储器
+    buidler.ReplaceStorer<RedisEventSourceStorer>();
+});
+```
+
+**3. 自定义事件发布者 `IEventPublisher`**
+
+Jaina 默认内置基于 `Channel` 的事件发布者 `ChannelEventPublisher`。
+
+如需自定义，只需实现 `ChannelEventPublisher` 接口即可：
+
+```cs
+public class ToDoEventPublisher : IEventPublisher
+{
+    private readonly IEventSourceStorer _eventSourceStorer;
+    
+    public ChannelEventPublisher(IEventSourceStorer eventSourceStorer)
+    {
+        _eventSourceStorer = eventSourceStorer;
+    }
+    
+    public async Task PublishAsync(IEventSource eventSource)
+    {
+        await _eventSourceStorer.WriteAsync(eventSource, eventSource.CancellationToken);
+    }
+}
+```
+
+最后，在注册 `EventBus` 服务中替换默认 `IEventPublisher`：
+
+```cs
+services.AddEventBus(buidler =>
+{
+    // 替换事件源存储器
+    buidler.ReplacePublisher<ToDoEventPublisher>();
+});
+```
+
+**4. 添加事件执行监视器 `IEventHandlerMonitor`**
+
+Jaina 提供了 `IEventHandlerMonitor` 监视器接口，实现该接口可以监视所有订阅事件，包括 `执行之前、执行之后，执行异常，共享上下文数据`。
+
+如添加 `ToDoEventHandlerMonitor`：
+
+```cs
+public class ToDoEventHandlerMonitor : IEventHandlerMonitor
+{
+    private readonly ILogger<ToDoEventHandlerMonitor> _logger;
+    public ToDoEventHandlerMonitor(ILogger<ToDoEventHandlerMonitor> logger)
+    {
+        _logger = logger;
+    }
+
+    public Task OnExecutingAsync(EventHandlerExecutingContext context)
+    {
+        _logger.LogInformation("执行之前：{EventId}", context.Source.EventId);
+        return Task.CompletedTask;
+    }
+
+    public Task OnExecutedAsync(EventHandlerExecutedContext context)
+    {
+        _logger.LogInformation("执行之后：{EventId}", context.Source.EventId);
+
+        if (context.Exception != null)
+        {
+            _logger.LogError(context.Exception, "执行出错啦：{EventId}", context.Source.EventId);
+        }
+
+        return Task.CompletedTask;
+    }
+}
+```
+
+最后，在注册 `EventBus` 服务中注册 `ToDoEventHandlerMonitor`：
+
+```cs
+services.AddEventBus(buidler =>
+{
+    // 主键事件执行监视器
+    buidler.AddMonitor<ToDoEventHandlerMonitor>();
+});
+```
+
+**5. 自定义事件处理程序执行器 `IEventHandlerExecutor`**
+
+Jaina 提供了 `IEventHandlerExecutor` 执行器接口，可以让开发者自定义事件处理函数执行策略，如 `超时控制，失败重试、熔断等等`。
+
+如添加 `RetryEventHandlerExecutor`：
+
+```cs
+public class RetryEventHandlerExecutor : IEventHandlerExecutor
+{
+    public async Task ExecuteAsync(EventHandlerExecutingContext context, Func<EventHandlerExecutingContext, Task> handler)
+    {
+        // 如果执行失败，每隔 1s 重试，最多三次
+        await Retry(async () => {
+            await handler(context);
+        }, 3, 1000);
+    }
+}
+```
+
+最后，在注册 `EventBus` 服务中注册 `RetryEventHandlerExecutor`：
+
+```cs
+services.AddEventBus(buidler =>
+{
+    // 主键事件执行监视器
+    buidler.AddExecutor<RetryEventHandlerExecutor>();
+});
 ```
 
 ## 文档

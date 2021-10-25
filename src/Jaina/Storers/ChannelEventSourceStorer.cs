@@ -47,8 +47,9 @@ namespace Jaina.EventBus
         /// 将事件源写入存储器
         /// </summary>
         /// <param name="eventSource">事件源对象</param>
+        /// <param name="cancellationToken">取消任务 Token</param>
         /// <returns><see cref="ValueTask"/></returns>
-        public async ValueTask WriteAsync(IEventSource eventSource)
+        public async ValueTask WriteAsync(IEventSource eventSource, CancellationToken cancellationToken)
         {
             // 空检查
             if (eventSource == default)
@@ -57,7 +58,7 @@ namespace Jaina.EventBus
             }
 
             // 写入存储器
-            await _channel.Writer.WriteAsync(eventSource);
+            await _channel.Writer.WriteAsync(eventSource, cancellationToken);
         }
 
         /// <summary>

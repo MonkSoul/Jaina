@@ -24,8 +24,9 @@ namespace Jaina.EventBus
         /// 将事件源写入存储器
         /// </summary>
         /// <param name="eventSource">事件源对象</param>
+        /// <param name="cancellationToken">取消任务 Token</param>
         /// <returns><see cref="ValueTask"/></returns>
-        ValueTask WriteAsync(IEventSource eventSource);
+        ValueTask WriteAsync(IEventSource eventSource, CancellationToken cancellationToken);
 
         /// <summary>
         /// 从存储器中读取一条事件源
