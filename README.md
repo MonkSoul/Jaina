@@ -2,7 +2,7 @@
 
 [![license](https://img.shields.io/badge/license-MulanPSL--2.0-orange?cacheSeconds=10800)](https://gitee.com/dotnetchina/Jaina/blob/master/LICENSE) [![nuget](https://img.shields.io/nuget/v/Jaina.svg?cacheSeconds=10800)](https://www.nuget.org/packages/Jaina) [![dotNET China](https://img.shields.io/badge/organization-dotNET%20China-yellow?cacheSeconds=10800)](https://gitee.com/dotnetchina)
 
-一个应用程序框架，您可以将它集成到任何 .NET/C# 应用程序中。
+.NET 事件总线，简化项目、类库、线程、服务等之间的通信，代码更少，质量更好。‎
 
 ![Jaina Drawio](https://images.gitee.com/uploads/images/2021/1025/131519_ad137395_974299.png "jaina.png")
 
