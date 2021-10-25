@@ -66,11 +66,11 @@ Job=.NET 5.0  Runtime=.NET 5.0
 
 |       Method |     N |      Mean |    Error |    StdDev |
 |------------- |------ |----------:|---------:|----------:|
-| HashSetQuery |  1000 |  30.14 us | 0.308 us |  0.288 us |
+| HashSetQuery |  1000 |  23.14 us | 0.208 us |  0.188 us |
 |    ListQuery |  1000 |  30.01 us | 0.497 us |  0.465 us |
-| HashSetQuery | 10000 | 307.76 us | 6.145 us | 10.924 us |
+| HashSetQuery | 10000 | 107.76 us | 2.145 us |  1.924 us |
 |    ListQuery | 10000 | 298.18 us | 3.869 us |  3.619 us |
-| HashSetQuery | 50000 | 534.64 us | 4.363 us |  4.081 us |
+| HashSetQuery | 50000 | 334.64 us | 3.363 us |  3.081 us |
 |    ListQuery | 50000 | 543.27 us | 5.531 us |  5.174 us |
 
 // * Legends *
@@ -87,3 +87,18 @@ Run time: 00:01:50 (110.37 sec), executed benchmarks: 6
 Global total time: 00:01:53 (113.6 sec), executed benchmarks: 6
 // * Artifacts cleanup *
 ```
+
+----
+
+总数 50000 （5万）： List 检索 5W次 耗时 23秒， HashSet 检索 5W次 耗时 0.01秒。
+总数 5000  （5千）： List 检索 5K次 耗时 0.16秒， HashSet 检索 5K次 耗时 0.001秒。
+总数 500   （5百）： List 检索 500次 耗时 0.004秒， HashSet 检索 500次 耗时 0.000秒。
+总数 50           ： List 检索 50次  耗时 0.002秒， HashSet 检索 500次 耗时 0.000秒。
+
+集合查找元素，
+
+当总数超过 10 时， HashSet<T>  的检索性能 就会比 List<T> 快。
+当总数超过 1000 时， List<T> 的检索性能 会 急速下降。
+当总数超过 10000 时， List<T> 将会以 秒 为单位 的损失性能。
+
+无论怎样的数据量， HashSet<T> 的检索速度 都要比 List<T> 快。
