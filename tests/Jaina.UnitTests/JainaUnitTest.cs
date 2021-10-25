@@ -3,6 +3,8 @@ using Jaina.EventBus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Jaina.UnitTests
@@ -77,6 +79,39 @@ namespace Jaina.UnitTests
         }
 
         [Fact]
+        public void TestMultipleSubscriber()
+        {
+            var builder = Host.CreateDefaultBuilder();
+            builder.ConfigureServices(services =>
+            {
+                services.AddEventBus(builder =>
+                {
+                    builder.AddSubscriber<TestEventSubscriber>();
+                    builder.AddSubscriber<Test2EventSubscriber>();
+                });
+
+                services.Count(s => s.ServiceType == typeof(IEventSubscriber) && s.Lifetime == ServiceLifetime.Singleton).Should().Be(2);
+            });
+
+            var app = builder.Build();
+            var services = app.Services;
+
+            var subscribers = services.GetServices<IEventSubscriber>();
+            subscribers.Count().Should().Be(2);
+
+            var eventBusHostedService = services.GetService<IHostedService>();
+            var eventBusHostedType = eventBusHostedService.GetType();
+            eventBusHostedType.Invoking(t =>
+            {
+                var eventHandlersField = t.GetField("_eventHandlers");
+                var eventHandlers = eventHandlersField.GetValue(eventBusHostedType);
+
+                var _hashSetType = eventHandlers.GetType();
+                _hashSetType.Invoking(t => t.GetProperty("Count").GetValue(eventHandlers).ToString().Should().Be("4"));
+            });
+        }
+
+        [Fact]
         public void TestMonitor()
         {
             var builder = Host.CreateDefaultBuilder();
@@ -120,6 +155,40 @@ namespace Jaina.UnitTests
 
             var monitor = services.GetService<IEventHandlerExecutor>();
             monitor.Should().NotBeNull();
+        }
+
+        [Fact]
+        public async Task TestPublisher()
+        {
+            var builder = Host.CreateDefaultBuilder();
+            builder.ConfigureServices(services =>
+            {
+                services.AddEventBus(builder =>
+                {
+                    builder.AddSubscriber<TestEventSubscriber>();
+                });
+            });
+
+            var app = builder.Build();
+            var services = app.Services;
+
+            var eventBusHostedService = services.GetService<IHostedService>() as BackgroundService;
+            var cancellationTokenSource = new CancellationTokenSource();
+            await eventBusHostedService.StartAsync(cancellationTokenSource.Token);
+
+            var eventPublisher = services.GetService<IEventPublisher>();
+
+            for (int i = 1; i <= 10; i++)
+            {
+                var eventSource = new ChannelEventSource("Unit:Publisher", 1);
+                await eventPublisher.PublishAsync(eventSource);
+            }
+
+            await Task.Delay(1000);
+
+            ThreadStaticValue.Value.Should().Be(11);
+
+            await eventBusHostedService.StopAsync(cancellationTokenSource.Token);
         }
     }
 }
