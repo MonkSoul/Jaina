@@ -6,7 +6,7 @@ namespace Jaina.UnitTests
 {
     internal class TestEventSubscriber : IEventSubscriber
     {
-        private Object obj = new Object();
+        private Object obj = new();
 
         [EventSubscribe("Unit:Test")]
         public Task CreateTest(EventHandlerExecutingContext context)

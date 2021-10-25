@@ -107,7 +107,7 @@ namespace Jaina.UnitTests
                 var eventHandlers = eventHandlersField.GetValue(eventBusHostedType);
 
                 var _hashSetType = eventHandlers.GetType();
-                _hashSetType.Invoking(t => t.GetProperty("Count").GetValue(eventHandlers).ToString().Should().Be("4"));
+                _hashSetType.Invoking(t => t.GetProperty("Count").GetValue(eventHandlers).ToString().Should().Be("5"));
             });
         }
 
