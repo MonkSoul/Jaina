@@ -188,7 +188,7 @@ services.AddEventBus(buidler =>
 
 Jaina 默认内置基于 `Channel` 的事件发布者 `ChannelEventPublisher`。
 
-如需自定义，只需实现 `ChannelEventPublisher` 接口即可：
+如需自定义，只需实现 `IEventPublisher` 接口即可：
 
 ```cs
 public class ToDoEventPublisher : IEventPublisher
