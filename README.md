@@ -6,6 +6,20 @@
 
 ![Jaina.drawio](https://images.gitee.com/uploads/images/2021/1025/151831_92e95259_974299.png "Jaina.drawio (1).png")
 
+## 特性
+
+- 简化组件之间通信
+  - 支持事件监视器
+  - 支持动作执行器
+  - 支持自定义消息存储组件
+  - 支持自定义策略执行
+- 高内聚，低耦合，使代码更简单
+- 非常快速，每秒可处理 `30000 +` 消息
+- 很小，仅 `10KB`
+- 无第三方依赖
+- 可在 `Windows/Linux/MacOS` 守护进程部署
+- 支持分布式、集群
+
 ## 安装
 
 - [Package Manager](https://www.nuget.org/packages/Jaina)
@@ -131,7 +145,7 @@ public class ToDoEventSource : IEventSource
     /// <summary>
     /// 事件创建时间
     /// </summary>
-    public DateTime CreatedTime { get; } = DateTime.UtcNow; 
+    public DateTime CreatedTime { get; } = DateTime.UtcNow;
 }
 ```
 
@@ -165,7 +179,7 @@ public class RedisEventSourceStorer : IEventSourceStorer
     {
         await _redisClient.WriteAsync(...., cancellationToken);
     }
-    
+
     // 从 Redis 中读取一条
     public async ValueTask<IEventSource> ReadAsync(CancellationToken cancellationToken)
     {
@@ -194,12 +208,12 @@ Jaina 默认内置基于 `Channel` 的事件发布者 `ChannelEventPublisher`。
 public class ToDoEventPublisher : IEventPublisher
 {
     private readonly IEventSourceStorer _eventSourceStorer;
-    
+
     public ChannelEventPublisher(IEventSourceStorer eventSourceStorer)
     {
         _eventSourceStorer = eventSourceStorer;
     }
-    
+
     public async Task PublishAsync(IEventSource eventSource)
     {
         await _eventSourceStorer.WriteAsync(eventSource, eventSource.CancellationToken);
