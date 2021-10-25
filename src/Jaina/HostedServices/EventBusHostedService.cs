@@ -76,11 +76,6 @@ namespace Jaina.EventBus
                 // 获取事件订阅者类型
                 var eventSubscriberType = eventSubscriber.GetType();
 
-                // 判断并获取事件订阅者过滤器
-                var filter = typeof(IEventHandlerMonitor).IsAssignableFrom(eventSubscriberType)
-                    ? eventSubscriber as IEventHandlerMonitor
-                    : default;
-
                 // 查找所有公开且贴有 [EventSubscribe] 的实例方法
                 var bindingAttr = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly;
                 var eventHandlerMethods = eventSubscriberType.GetMethods(bindingAttr)
@@ -174,7 +169,7 @@ namespace Jaina.EventBus
 
                     try
                     {
-                        // 调用执行前过滤器
+                        // 调用执行前监视器
                         if (Monitor != default)
                         {
                             await Monitor.OnExecutingAsync(eventHandlerExecutingContext);
@@ -209,7 +204,7 @@ namespace Jaina.EventBus
                     }
                     finally
                     {
-                        // 调用执行后过滤器
+                        // 调用执行后监视器
                         if (Monitor != default)
                         {
                             // 创建执行后上下文
