@@ -4,6 +4,8 @@
 
 一个应用程序框架，您可以将它集成到任何 .NET/C# 应用程序中。
 
+![Jaina Drawio](https://images.gitee.com/uploads/images/2021/1025/131519_ad137395_974299.png "jaina.png")
+
 ## 安装
 
 - [Package Manager](https://www.nuget.org/packages/Jaina)
