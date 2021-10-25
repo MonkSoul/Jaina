@@ -53,6 +53,7 @@ public class ToDoEventSubscriber : IEventSubscriber
     }
     // 标记 [EventSubscribe(事件 Id)] 特性
     [EventSubscribe("ToDo:Create")]
+    // [EventSubscribe("ToDo:CreateOrUpdate")] // 支持多个
     public async Task CreateToDo(EventHandlerExecutingContext context)
     {
         var todo = context.Source;
