@@ -3,6 +3,7 @@ using Jaina.EventBus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -39,11 +40,12 @@ namespace Jaina.UnitTests
             eventBusOptionsBuilder.UnobservedTaskExceptionHandler.Should().Be(default);
 
             var builderType = typeof(EventBusOptionsBuilder);
-            builderType.Invoking(t => t.GetField("_eventSubscribers").GetValue(eventBusOptionsBuilder).Should().NotBeNull());
-            builderType.Invoking(t => t.GetField("_eventPublisher").GetValue(eventBusOptionsBuilder).Should().BeNull());
-            builderType.Invoking(t => t.GetField("_eventSourceStorerImplementationFactory").GetValue(eventBusOptionsBuilder).Should().BeNull());
-            builderType.Invoking(t => t.GetField("_eventHandlerMonitor").GetValue(eventBusOptionsBuilder).Should().BeNull());
-            builderType.Invoking(t => t.GetField("_eventHandlerExecutor").GetValue(eventBusOptionsBuilder).Should().BeNull());
+            var bindingAttr = BindingFlags.NonPublic | BindingFlags.Instance;
+            builderType.Invoking(t => t.GetField("_eventSubscribers", bindingAttr).GetValue(eventBusOptionsBuilder).Should().NotBeNull()).Should().NotThrow();
+            builderType.Invoking(t => t.GetField("_eventPublisher", bindingAttr).GetValue(eventBusOptionsBuilder).Should().BeNull()).Should().NotThrow();
+            builderType.Invoking(t => t.GetField("_eventSourceStorerImplementationFactory", bindingAttr).GetValue(eventBusOptionsBuilder).Should().BeNull()).Should().NotThrow();
+            builderType.Invoking(t => t.GetField("_eventHandlerMonitor", bindingAttr).GetValue(eventBusOptionsBuilder).Should().BeNull()).Should().NotThrow();
+            builderType.Invoking(t => t.GetField("_eventHandlerExecutor", bindingAttr).GetValue(eventBusOptionsBuilder).Should().BeNull()).Should().NotThrow();
         }
 
         [Fact]
@@ -67,15 +69,16 @@ namespace Jaina.UnitTests
             var eventBusHostedType = eventBusHostedService.GetType();
             eventBusHostedType.Invoking(t =>
             {
-                var eventHandlersField = t.GetField("_eventHandlers");
-                var eventHandlers = eventHandlersField.GetValue(eventBusHostedType);
+                var bindingAttr = BindingFlags.NonPublic | BindingFlags.Instance;
+                var eventHandlersField = t.GetField("_eventHandlers", bindingAttr);
+                var eventHandlers = eventHandlersField.GetValue(eventBusHostedService);
 
                 eventHandlers.Should().NotBeNull();
                 eventHandlersField.FieldType.IsGenericType.Should().BeTrue();
 
                 var _hashSetType = eventHandlers.GetType();
                 _hashSetType.Invoking(t => t.GetProperty("Count").GetValue(eventHandlers).ToString().Should().Be("4"));
-            });
+            }).Should().NotThrow();
         }
 
         [Fact]
@@ -103,12 +106,13 @@ namespace Jaina.UnitTests
             var eventBusHostedType = eventBusHostedService.GetType();
             eventBusHostedType.Invoking(t =>
             {
-                var eventHandlersField = t.GetField("_eventHandlers");
-                var eventHandlers = eventHandlersField.GetValue(eventBusHostedType);
+                var bindingAttr = BindingFlags.NonPublic | BindingFlags.Instance;
+                var eventHandlersField = t.GetField("_eventHandlers", bindingAttr);
+                var eventHandlers = eventHandlersField.GetValue(eventBusHostedService);
 
                 var _hashSetType = eventHandlers.GetType();
-                _hashSetType.Invoking(t => t.GetProperty("Count").GetValue(eventHandlers).ToString().Should().Be("5"));
-            });
+                _hashSetType.Invoking(t => t.GetProperty("Count").GetValue(eventHandlers).ToString().Should().Be("5")).Should().NotThrow();
+            }).Should().NotThrow();
         }
 
         [Fact]
