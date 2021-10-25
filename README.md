@@ -198,7 +198,11 @@ public class RedisEventSourceStorer : IEventSourceStorer
 services.AddEventBus(buidler =>
 {
     // 替换事件源存储器
-    buidler.ReplaceStorer<RedisEventSourceStorer>();
+    buidler.ReplaceStorer(serviceProvider => 
+    {
+        var redisClient = serviceProvider.GetService<IRedisClient>();
+        return new RedisEventSourceStorer(redisClient);
+    });
 });
 ```
 
