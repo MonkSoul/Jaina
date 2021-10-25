@@ -18,11 +18,9 @@ Install-Package Jaina
 dotnet add package Jaina
 ```
 
-## 例子
+## 快速入门
 
 我们在[主页](https://gitee.com/dotnetchina/Jaina)上有不少例子，这是让您入门的第一个：
-
-### 快速入门
 
 1. 定义事件订阅者 `ToDoEventSubscriber`：
 
@@ -98,7 +96,7 @@ info: Jaina.Samples.ToDoEventSubscriber[0]
       创建一个 ToDo：Jaina
 ```
 
-### 高级教程
+## 高级教程
 
 **1. 自定义事件源 `IEventSource`**
 
