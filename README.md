@@ -4,7 +4,7 @@
 
 .NET 事件总线，简化项目、类库、线程、服务等之间的通信，代码更少，质量更好。‎
 
-![Jaina.drawio](https://images.gitee.com/uploads/images/2021/1025/151831_92e95259_974299.png "Jaina.drawio (1).png")
+![Jaina.drawio](https://images.gitee.com/uploads/images/2021/1025/151831_92e95259_974299.png "Jaina.drawio.png")
 
 ## 特性
 
@@ -21,6 +21,7 @@
 - 无第三方依赖
 - 可在 `Windows/Linux/MacOS` 守护进程部署
 - 支持分布式、集群
+- 高质量代码和良好单元测试
 
 ## 安装
 
@@ -115,7 +116,7 @@ info: Jaina.Samples.ToDoEventSubscriber[0]
       创建一个 ToDo：Jaina
 ```
 
-## 高级教程
+## 高级指南
 
 **1. 自定义事件源 `IEventSource`**
 
