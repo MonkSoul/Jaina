@@ -12,6 +12,7 @@ namespace Jaina.UnitTests
         }
 
         [EventSubscribe("Unit:Test2")]
+        [EventSubscribe("Unit:Test3")]
         public Task CreateTest2(EventHandlerExecutingContext context)
         {
             return Task.CompletedTask;

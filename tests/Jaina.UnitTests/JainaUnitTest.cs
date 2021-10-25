@@ -72,8 +72,54 @@ namespace Jaina.UnitTests
                 eventHandlersField.FieldType.IsGenericType.Should().BeTrue();
 
                 var _hashSetType = eventHandlers.GetType();
-                _hashSetType.Invoking(t => t.GetProperty("Count").GetValue(eventHandlers).ToString().Should().Be("2"));
+                _hashSetType.Invoking(t => t.GetProperty("Count").GetValue(eventHandlers).ToString().Should().Be("3"));
             });
+        }
+
+        [Fact]
+        public void TestMonitor()
+        {
+            var builder = Host.CreateDefaultBuilder();
+            builder.ConfigureServices(services =>
+            {
+                services.Any(s => s.ServiceType == typeof(IEventHandlerMonitor) && s.Lifetime == ServiceLifetime.Singleton).Should().BeFalse();
+
+                services.AddEventBus(builder =>
+                {
+                    builder.AddMonitor<TestEventHandlerMonitor>();
+                });
+
+                services.Any(s => s.ServiceType == typeof(IEventHandlerMonitor) && s.Lifetime == ServiceLifetime.Singleton).Should().BeTrue();
+            });
+
+            var app = builder.Build();
+            var services = app.Services;
+
+            var monitor = services.GetService<IEventHandlerMonitor>();
+            monitor.Should().NotBeNull();
+        }
+
+        [Fact]
+        public void TestExecutor()
+        {
+            var builder = Host.CreateDefaultBuilder();
+            builder.ConfigureServices(services =>
+            {
+                services.Any(s => s.ServiceType == typeof(IEventHandlerExecutor) && s.Lifetime == ServiceLifetime.Singleton).Should().BeFalse();
+
+                services.AddEventBus(builder =>
+                {
+                    builder.AddExecutor<TestEventHandlerExecutor>();
+                });
+
+                services.Any(s => s.ServiceType == typeof(IEventHandlerExecutor) && s.Lifetime == ServiceLifetime.Singleton).Should().BeTrue();
+            });
+
+            var app = builder.Build();
+            var services = app.Services;
+
+            var monitor = services.GetService<IEventHandlerExecutor>();
+            monitor.Should().NotBeNull();
         }
     }
 }
