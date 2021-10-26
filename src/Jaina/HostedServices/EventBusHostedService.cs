@@ -70,6 +70,7 @@ namespace Jaina.EventBus
             Monitor = serviceProvider.GetService<IEventHandlerMonitor>();
             Executor = serviceProvider.GetService<IEventHandlerExecutor>();
 
+            var bindingAttr = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly;
             // 逐条获取事件处理程序并进行包装
             foreach (var eventSubscriber in eventSubscribers)
             {
@@ -77,14 +78,13 @@ namespace Jaina.EventBus
                 var eventSubscriberType = eventSubscriber.GetType();
 
                 // 查找所有公开且贴有 [EventSubscribe] 的实例方法
-                var bindingAttr = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly;
                 var eventHandlerMethods = eventSubscriberType.GetMethods(bindingAttr)
                     .Where(u => u.IsDefined(typeof(EventSubscribeAttribute), false));
 
                 // 遍历所有事件订阅者处理方法
                 foreach (var eventHandlerMethod in eventHandlerMethods)
                 {
-                    // 将方法转换成 Func<EventHandlerExecutingContext, CancellationToken, Task> 委托
+                    // 将方法转换成 Func<EventHandlerExecutingContext, Task> 委托
                     var handler = eventHandlerMethod.CreateDelegate<Func<EventHandlerExecutingContext, Task>>(eventSubscriber);
 
                     // 处理同一个事件处理程序支持多个事件 Id 情况
