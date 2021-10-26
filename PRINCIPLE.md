@@ -1,3 +1,4 @@
+![Jaina.drawio](https://gitee.com/dotnetchina/Jaina/raw/master/drawio/Jaina.drawio.png "Jaina.drawio.png")
 
 ## 源码解析
 
