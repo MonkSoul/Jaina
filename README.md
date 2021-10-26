@@ -52,6 +52,7 @@ public class ToDoEventSubscriber : IEventSubscriber
     {
         _logger = logger;
     }
+
     // 标记 [EventSubscribe(事件 Id)] 特性
     [EventSubscribe("ToDo:Create")]
     // [EventSubscribe("ToDo:CreateOrUpdate")] // 支持多个
@@ -77,6 +78,7 @@ public class ToDoController : ControllerBase
     {
         _eventPublisher = eventPublisher;
     }
+
     // 发布 ToDo:Create 消息
     [HttpPost]
     public async Task CreateDoTo(string name)
@@ -127,6 +129,12 @@ Jaina 使用 `IEventSource` 作为消息载体，任何实现该接口的类都�
 ```cs
 public class ToDoEventSource : IEventSource
 {
+    public ToDoEventSource(string eventId, string todoName)
+    {
+        EventId = eventId;
+        ToDoName = todoName;
+    }
+
     // 自定义属性
     public string ToDoName { get; }
 
@@ -156,10 +164,7 @@ public class ToDoEventSource : IEventSource
 使用：
 
 ```cs
-await _eventPublisher.PublishAsync(new ToDoEventSource {
-    EventId = "ToDo:Create",
-    ToDoName = "我的 ToDo Name"
-});
+await _eventPublisher.PublishAsync(new ToDoEventSource ("ToDo:Create", "我的 ToDo Name"));
 ```
 
 **2. 自定义事件源存储器 `IEventSourceStorer`**
@@ -198,7 +203,7 @@ public class RedisEventSourceStorer : IEventSourceStorer
 services.AddEventBus(buidler =>
 {
     // 替换事件源存储器
-    buidler.ReplaceStorer(serviceProvider => 
+    buidler.ReplaceStorer(serviceProvider =>
     {
         var redisClient = serviceProvider.GetService<IRedisClient>();
         return new RedisEventSourceStorer(redisClient);
@@ -279,7 +284,7 @@ public class ToDoEventHandlerMonitor : IEventHandlerMonitor
 ```cs
 services.AddEventBus(buidler =>
 {
-    // 主键事件执行监视器
+    // 添加事件执行监视器
     buidler.AddMonitor<ToDoEventHandlerMonitor>();
 });
 ```
@@ -308,14 +313,41 @@ public class RetryEventHandlerExecutor : IEventHandlerExecutor
 ```cs
 services.AddEventBus(buidler =>
 {
-    // 主键事件执行监视器
+    // 添加事件执行器
     buidler.AddExecutor<RetryEventHandlerExecutor>();
 });
 ```
 
+**6. 订阅 `EventBus` 服务执行任务意外异常**
+
+```cs
+services.AddEventBus(buidler =>
+{
+    // 订阅 EventBus 未捕获异常
+    buidler.UnobservedTaskExceptionHandler = (obj, args) =>
+    {
+        // ....
+    };
+});
+```
+
+**7. `EventBusOptionsBuilder` 说明**
+
+`EventBusOptionsBuilder` 是 `AddEventBus` 构建服务选项，该选项包含以下属性和方法：
+
+- 属性
+  - `ChannelCapacity`：默认内存通道容量
+  - `UnobservedTaskExceptionHandler`：订阅执行任务未察觉异常
+- 方法
+  - `AddSubscriber<TEventSubscriber>`：添加订阅者
+  - `ReplacePublisher<TEventPublisher>`：替换发布者
+  - `ReplaceStorer(Func<IServiceProvider, IEventSourceStorer>)`：替换存储器
+  - `AddMonitor<TEventHandlerMonitor>`：添加监视器
+  - `AddExecutor<TEventHandlerExecutor>`：添加执行器
+
 ## 文档
 
-您可以在[主页](https://dotnetchina.gitee.io/Jaina)找到 Jaina 文档。
+您可以在[主页](https://gitee.com/dotnetchina/Jaina)找到 Jaina 文档。
 
 ## 贡献
 
