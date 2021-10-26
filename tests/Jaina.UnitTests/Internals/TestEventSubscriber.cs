@@ -27,7 +27,7 @@ namespace Jaina.UnitTests
             lock (obj)
             {
                 var i = int.Parse(context.Source.Payload.ToString());
-                ThreadStaticValue.Value += i;
+                ThreadStaticValue.PublishValue += i;
             }
             return Task.CompletedTask;
         }

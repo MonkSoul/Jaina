@@ -116,7 +116,7 @@ namespace Jaina.UnitTests
         }
 
         [Fact]
-        public void TestMonitor()
+        public async Task TestMonitor()
         {
             var builder = Host.CreateDefaultBuilder();
             builder.ConfigureServices(services =>
@@ -125,6 +125,7 @@ namespace Jaina.UnitTests
 
                 services.AddEventBus(builder =>
                 {
+                    builder.AddSubscriber<TestEventSubscriber>();
                     builder.AddMonitor<TestEventHandlerMonitor>();
                 });
 
@@ -136,10 +137,24 @@ namespace Jaina.UnitTests
 
             var monitor = services.GetService<IEventHandlerMonitor>();
             monitor.Should().NotBeNull();
+
+            var eventBusHostedService = services.GetService<IHostedService>() as BackgroundService;
+            var cancellationTokenSource = new CancellationTokenSource();
+            await eventBusHostedService.StartAsync(cancellationTokenSource.Token);
+
+            var eventPublisher = services.GetService<IEventPublisher>();
+            var eventSource = new ChannelEventSource("Unit:Publisher", 1);
+            await eventPublisher.PublishAsync(eventSource);
+
+            await Task.Delay(1000);
+
+            ThreadStaticValue.MonitorValue.Should().Be(3);
+
+            await eventBusHostedService.StopAsync(cancellationTokenSource.Token);
         }
 
         [Fact]
-        public void TestExecutor()
+        public async Task TestExecutor()
         {
             var builder = Host.CreateDefaultBuilder();
             builder.ConfigureServices(services =>
@@ -148,6 +163,7 @@ namespace Jaina.UnitTests
 
                 services.AddEventBus(builder =>
                 {
+                    builder.AddSubscriber<TestEventSubscriber>();
                     builder.AddExecutor<TestEventHandlerExecutor>();
                 });
 
@@ -159,6 +175,20 @@ namespace Jaina.UnitTests
 
             var monitor = services.GetService<IEventHandlerExecutor>();
             monitor.Should().NotBeNull();
+
+            var eventBusHostedService = services.GetService<IHostedService>() as BackgroundService;
+            var cancellationTokenSource = new CancellationTokenSource();
+            await eventBusHostedService.StartAsync(cancellationTokenSource.Token);
+
+            var eventPublisher = services.GetService<IEventPublisher>();
+            var eventSource = new ChannelEventSource("Unit:Publisher", 1);
+            await eventPublisher.PublishAsync(eventSource);
+
+            await Task.Delay(1000);
+
+            ThreadStaticValue.ExecutorValue.Should().Be(3);
+
+            await eventBusHostedService.StopAsync(cancellationTokenSource.Token);
         }
 
         [Fact]
@@ -181,6 +211,7 @@ namespace Jaina.UnitTests
             await eventBusHostedService.StartAsync(cancellationTokenSource.Token);
 
             var eventPublisher = services.GetService<IEventPublisher>();
+            ThreadStaticValue.PublishValue = 1;
 
             for (int i = 1; i <= 10; i++)
             {
@@ -190,7 +221,7 @@ namespace Jaina.UnitTests
 
             await Task.Delay(1000);
 
-            ThreadStaticValue.Value.Should().Be(11);
+            ThreadStaticValue.PublishValue.Should().Be(11);
 
             await eventBusHostedService.StopAsync(cancellationTokenSource.Token);
         }
