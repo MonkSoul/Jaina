@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<Version>1.0.3</Version>
+		<Version>1.0.4</Version>
 		<Description>.NET 事件总线，简化项目、类库、线程、服务等之间的通信，代码更少，质量更好。</Description>
 	</PropertyGroup>
 
