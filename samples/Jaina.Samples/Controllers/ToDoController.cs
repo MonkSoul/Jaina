@@ -21,5 +21,12 @@ namespace Jaina.Samples.Controllers
         {
             await _eventPublisher.PublishAsync(new ChannelEventSource("ToDo:Create", name));
         }
+
+        // 延迟发布 ToDo:Create 消息
+        [HttpPost]
+        public async Task DelayCreateDoTo(string name)
+        {
+            await _eventPublisher.PublishDelayAsync(new ChannelEventSource("ToDo:Create", name), 3000);
+        }
     }
 }

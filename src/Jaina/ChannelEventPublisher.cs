@@ -6,6 +6,7 @@
 // THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 // See the Mulan PSL v2 for more details.
 
+using System;
 using System.Threading.Tasks;
 
 namespace Jaina.EventBus
@@ -37,6 +38,26 @@ namespace Jaina.EventBus
         public async Task PublishAsync(IEventSource eventSource)
         {
             await _eventSourceStorer.WriteAsync(eventSource, eventSource.CancellationToken);
+        }
+
+        /// <summary>
+        /// 延迟发布一条消息
+        /// </summary>
+        /// <param name="eventSource">事件源</param>
+        /// <param name="delay">延迟数（毫秒）</param>
+        /// <returns><see cref="Task"/> 实例</returns>
+        public Task PublishDelayAsync(IEventSource eventSource, long delay)
+        {
+            // 创建新线程
+            Task.Factory.StartNew(async () =>
+            {
+                // 延迟 delay 毫秒
+                await Task.Delay(TimeSpan.FromMilliseconds(delay), eventSource.CancellationToken);
+
+                await _eventSourceStorer.WriteAsync(eventSource, eventSource.CancellationToken);
+            }, eventSource.CancellationToken);
+
+            return Task.CompletedTask;
         }
     }
 }

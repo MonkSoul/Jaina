@@ -21,5 +21,13 @@ namespace Jaina.EventBus
         /// <param name="eventSource">事件源</param>
         /// <returns><see cref="Task"/> 实例</returns>
         Task PublishAsync(IEventSource eventSource);
+
+        /// <summary>
+        /// 延迟发布一条消息
+        /// </summary>
+        /// <param name="eventSource">事件源</param>
+        /// <param name="delay">延迟数（毫秒）</param>
+        /// <returns><see cref="Task"/> 实例</returns>
+        Task PublishDelayAsync(IEventSource eventSource, long delay);
     }
 }
