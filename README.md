@@ -4,7 +4,7 @@
 
 .NET 事件总线，简化项目、类库、线程、服务等之间的通信，代码更少，质量更好。‎
 
-![Jaina.drawio](https://images.gitee.com/uploads/images/2021/1025/151831_92e95259_974299.png "Jaina.drawio.png")
+![Jaina.drawio](https://gitee.com/dotnetchina/Jaina/raw/master/drawio/Jaina.drawio.png "Jaina.drawio.png")
 
 ## 特性
 
