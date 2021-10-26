@@ -113,7 +113,7 @@ public class Startup
 
 4. 运行项目：
 
-```log
+```bash
 info: Jaina.Samples.ToDoEventSubscriber[0]
       创建一个 ToDo：Jaina
 ```
