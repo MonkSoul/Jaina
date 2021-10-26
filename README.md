@@ -6,6 +6,8 @@
 
 ![Jaina.drawio](https://gitee.com/dotnetchina/Jaina/raw/master/drawio/Jaina.drawio.png "Jaina.drawio.png")
 
+[查看源码解析](./PRINCIPLE.md)
+
 ## 特性
 
 - 简化组件之间通信
