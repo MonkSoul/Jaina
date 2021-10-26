@@ -39,6 +39,8 @@ foreach (var eventHandlerThatShouldRun in eventHandlersThatShouldRun)
 }
 ```
 
+5. 调用 `Handler` 属性时，抽象出 `EventHandlerContext` 上下文的概念，将本次事件消息所需信息进行包装，不限于事件源 `IEventSource`，执行事件，异常等。这样的好处是所有处理程序基于同一对象操作，对后续拓展维护也有极大好处。
+
 ----
 
 ## 目录结构
