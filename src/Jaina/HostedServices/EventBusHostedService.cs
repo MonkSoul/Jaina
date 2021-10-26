@@ -149,6 +149,10 @@ namespace Jaina.EventBus
             // 创建一个任务工厂
             var taskFactory = new TaskFactory(TaskScheduler.Current);
 
+            // 创建关联取消任务 Token
+            var stoppingCts = CancellationTokenSource.CreateLinkedTokenSource(
+                new CancellationToken[2] { stoppingToken, eventSource.CancellationToken });
+
             // 逐条创建新线程调用
             foreach (var eventHandlerThatShouldRun in eventHandlersThatShouldRun)
             {
@@ -217,7 +221,7 @@ namespace Jaina.EventBus
                             await Monitor.OnExecutedAsync(eventHandlerExecutedContext);
                         }
                     }
-                }, stoppingToken);
+                }, stoppingCts.Token);
             }
         }
     }
