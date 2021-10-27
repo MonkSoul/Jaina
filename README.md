@@ -320,7 +320,37 @@ services.AddEventBus(buidler =>
 });
 ```
 
-**6. 订阅 `EventBus` 服务执行任务意外异常**
+**6. 使用有作用域的服务**
+
+Jaina 所有服务均注册为单例，如需使用作用域服务（单例服务可直接注入），可通过依赖注入 `IServiceProvider` 实例并通过 `CreateScope()` 创建一个作用域，如：
+
+```cs
+public class ToDoEventSubscriber : IEventSubscriber
+{
+    private readonly ILogger<ToDoEventSubscriber> _logger;
+
+    public ToDoEventSubscriber(IServiceProvider services
+        , ILogger<ToDoEventSubscriber> logger)
+    {
+        Services = services;
+        _logger = logger;
+    }
+
+    public IServiceProvider Services { get; }
+
+    [EventSubscribe("ToDo:Create")]
+    public async Task CreateToDo(EventHandlerExecutingContext context)
+    {
+        using (var scope = Services.CreateScope())
+        {
+            var scopedProcessingService = scope.ServiceProvider.GetRequiredService<IScopedProcessingService>();
+            // ....
+        }
+    }
+}
+```
+
+**7. 订阅 `EventBus` 服务执行任务意外异常**
 
 ```cs
 services.AddEventBus(buidler =>
@@ -333,7 +363,7 @@ services.AddEventBus(buidler =>
 });
 ```
 
-**7. `EventBusOptionsBuilder` 说明**
+**8. `EventBusOptionsBuilder` 说明**
 
 `EventBusOptionsBuilder` 是 `AddEventBus` 构建服务选项，该选项包含以下属性和方法：
 
