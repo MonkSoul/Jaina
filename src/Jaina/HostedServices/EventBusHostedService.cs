@@ -135,6 +135,14 @@ namespace Jaina.EventBus
             // 从事件存储器中读取一条
             var eventSource = await _eventSourceStorer.ReadAsync(stoppingToken);
 
+            // 空检查
+            if (string.IsNullOrWhiteSpace(eventSource?.EventId))
+            {
+                _logger.LogWarning("Invalid EventId, EventId cannot be <null> or an empty string.");
+
+                return;
+            }
+
             // 查找事件 Id 匹配的事件处理程序
             var eventHandlersThatShouldRun = _eventHandlers.Where(t => t.ShouldRun(eventSource.EventId));
 
