@@ -154,12 +154,8 @@ namespace Jaina.EventBus
                 return;
             }
 
-            // 创建一个任务工厂
+            // 创建一个任务工厂并保证执行任务都使用当前的计划程序
             var taskFactory = new TaskFactory(TaskScheduler.Current);
-
-            // 创建关联取消任务 Token
-            var stoppingCts = CancellationTokenSource.CreateLinkedTokenSource(
-                new CancellationToken[2] { stoppingToken, eventSource.CancellationToken });
 
             // 逐条创建新线程调用
             foreach (var eventHandlerThatShouldRun in eventHandlersThatShouldRun)
@@ -177,10 +173,16 @@ namespace Jaina.EventBus
                     };
 
                     // 执行异常对象
-                    InvalidOperationException executionException = default;
+                    InvalidOperationException? executionException = default;
 
                     try
                     {
+                        // 处理任务取消
+                        if (eventSource.CancellationToken.IsCancellationRequested)
+                        {
+                            throw new OperationCanceledException();
+                        }
+
                         // 调用执行前监视器
                         if (Monitor != default)
                         {
@@ -229,7 +231,7 @@ namespace Jaina.EventBus
                             await Monitor.OnExecutedAsync(eventHandlerExecutedContext);
                         }
                     }
-                }, stoppingCts.Token);
+                }, stoppingToken);
             }
         }
     }

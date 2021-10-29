@@ -2,16 +2,26 @@ using FluentAssertions;
 using Jaina.EventBus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.VisualStudio.TestPlatform.Utilities;
+using System;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
+using Xunit.Abstractions;
+using Xunit.Sdk;
 
 namespace Jaina.UnitTests
 {
     public class JainaUnitTest
     {
+        protected readonly ITestOutputHelper Output;
+        public JainaUnitTest(ITestOutputHelper tempOutput)
+        {
+            Output = tempOutput;
+        }
+
         [Fact]
         public void TestDefaultEventBus()
         {
@@ -222,6 +232,43 @@ namespace Jaina.UnitTests
             await Task.Delay(1000);
 
             ThreadStaticValue.PublishValue.Should().Be(11);
+
+            await eventBusHostedService.StopAsync(cancellationTokenSource.Token);
+        }
+
+        [Fact]
+        public async Task TestCancel()
+        {
+            var builder = Host.CreateDefaultBuilder();
+            builder.ConfigureServices(services =>
+            {
+                services.AddEventBus(builder =>
+                {
+                    builder.AddSubscriber<TestEventSubscriber>();
+
+                    builder.UnobservedTaskExceptionHandler = (obj, args) =>
+                    {
+                        Output.WriteLine(args.Exception.InnerException.Message);
+                        args.Exception.InnerException.GetType().Should().Be(typeof(OperationCanceledException));
+                    };
+                });
+            });
+
+            var app = builder.Build();
+            var services = app.Services;
+
+            var eventBusHostedService = services.GetService<IHostedService>() as BackgroundService;
+            var cancellationTokenSource = new CancellationTokenSource();
+            await eventBusHostedService.StartAsync(cancellationTokenSource.Token);
+
+            var eventPublisher = services.GetService<IEventPublisher>();
+
+            var cts = new CancellationTokenSource();
+            var eventSource = new ChannelEventSource("Unit:Publisher", 1, cts.Token);
+            await eventPublisher.PublishAsync(eventSource);
+            cts.Cancel();
+
+            await Task.Delay(1000);
 
             await eventBusHostedService.StopAsync(cancellationTokenSource.Token);
         }
