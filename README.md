@@ -41,7 +41,7 @@ dotnet add package Jaina
 
 ## 快速入门
 
-我们在[主页](https://gitee.com/dotnetchina/Jaina/tree/master/samples)上有不少例子，这是让您入门的第一个：
+我们在[主页](./samples)上有不少例子，这是让您入门的第一个：
 
 1. 定义事件订阅者 `ToDoEventSubscriber`：
 
@@ -120,11 +120,11 @@ info: Jaina.Samples.ToDoEventSubscriber[0]
       创建一个 ToDo：Jaina
 ```
 
-[更多文档](https://gitee.com/dotnetchina/Jaina/tree/master/docs)
+[更多文档](./docs)
 
 ## 文档
 
-您可以在[主页](https://gitee.com/dotnetchina/Jaina/tree/master/docs)找到 Jaina 文档。
+您可以在[主页](./docs)找到 Jaina 文档。
 
 ## 贡献
 
@@ -132,7 +132,7 @@ info: Jaina.Samples.ToDoEventSubscriber[0]
 
 ## 许可证
 
-Jaina 采用 [MulanPSL-2.0](https://gitee.com/dotnetchina/Jaina/blob/master/LICENSE) 开源许可证。
+Jaina 采用 [MulanPSL-2.0](./LICENSE) 开源许可证。
 
 ```
 Copyright (c) 2020-2021 百小僧, Baiqian Co.,Ltd.
