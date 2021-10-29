@@ -173,7 +173,7 @@ namespace Jaina.EventBus
                     };
 
                     // 执行异常对象
-                    InvalidOperationException? executionException = default;
+                    InvalidOperationException executionException = default;
 
                     try
                     {
