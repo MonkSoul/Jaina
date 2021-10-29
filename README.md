@@ -55,9 +55,7 @@ public class ToDoEventSubscriber : IEventSubscriber
         _logger = logger;
     }
 
-    // 标记 [EventSubscribe(事件 Id)] 特性
-    [EventSubscribe("ToDo:Create")]
-    // [EventSubscribe("ToDo:CreateOrUpdate")] // 支持多个
+    [EventSubscribe("ToDo:Create")] // 注册多个
     public async Task CreateToDo(EventHandlerExecutingContext context)
     {
         var todo = context.Source;
@@ -93,24 +91,12 @@ public class ToDoController : ControllerBase
 3. 在 `Startup.cs` 注册 `EventBus` 服务：
 
 ```cs
-public class Startup
+// 注册 EventBus 服务
+services.AddEventBus(buidler =>
 {
-    public void ConfigureServices(IServiceCollection services)
-    {
-        // 注册 EventBus 服务
-        services.AddEventBus(buidler =>
-        {
-            // 注册 ToDo 事件订阅者
-            buidler.AddSubscriber<ToDoEventSubscriber>();
-        });
-        // ....
-    }
-
-    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
-    {
-        // ....
-    }
-}
+    // 注册 ToDo 事件订阅者
+    buidler.AddSubscriber<ToDoEventSubscriber>();
+});
 ```
 
 4. 运行项目：
