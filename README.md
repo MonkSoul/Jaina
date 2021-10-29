@@ -55,7 +55,7 @@ public class ToDoEventSubscriber : IEventSubscriber
         _logger = logger;
     }
 
-    [EventSubscribe("ToDo:Create")] // 注册多个
+    [EventSubscribe("ToDo:Create")] // 支持多个
     public async Task CreateToDo(EventHandlerExecutingContext context)
     {
         var todo = context.Source;
@@ -68,8 +68,6 @@ public class ToDoEventSubscriber : IEventSubscriber
 2. 创建控制器 `ToDoController`，依赖注入 `IEventPublisher` 服务：
 
 ```cs
-[Route("api/[controller]/[action]")]
-[ApiController]
 public class ToDoController : ControllerBase
 {
     // 依赖注入事件发布者 IEventPublisher
@@ -80,7 +78,6 @@ public class ToDoController : ControllerBase
     }
 
     // 发布 ToDo:Create 消息
-    [HttpPost]
     public async Task CreateDoTo(string name)
     {
         await _eventPublisher.PublishAsync(new ChannelEventSource("ToDo:Create", name));
