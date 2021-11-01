@@ -89,10 +89,10 @@ public class ToDoController : ControllerBase
 
 ```cs
 // 注册 EventBus 服务
-services.AddEventBus(buidler =>
+services.AddEventBus(builder =>
 {
     // 注册 ToDo 事件订阅者
-    buidler.AddSubscriber<ToDoEventSubscriber>();
+    builder.AddSubscriber<ToDoEventSubscriber>();
 });
 ```
 

@@ -18,11 +18,11 @@ namespace Jaina.Samples
 
         public void ConfigureServices(IServiceCollection services)
         {
-            // ×¢²á EventBus ·þÎñ
-            services.AddEventBus(buidler =>
+            // ×¢ï¿½ï¿½ EventBus ï¿½ï¿½ï¿½ï¿½
+            services.AddEventBus(builder =>
             {
-                // ×¢²á ToDo ÊÂ¼þ¶©ÔÄÕß
-                buidler.AddSubscriber<ToDoEventSubscriber>();
+                // ×¢ï¿½ï¿½ ToDo ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                builder.AddSubscriber<ToDoEventSubscriber>();
             });
 
             services.AddControllers();
