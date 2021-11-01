@@ -288,5 +288,28 @@ namespace Jaina.UnitTests
             var app = builder.Build();
             var services = app.Services;
         }
+
+        [Fact]
+        public void TestCustomStorer()
+        {
+            var builder = Host.CreateDefaultBuilder();
+            builder.ConfigureServices(services =>
+            {
+                services.AddEventBus(builder =>
+                {
+                    builder.AddSubscriber<TestEventSubscriber>();
+                    builder.ReplaceStorer(serviceProvider =>
+                    {
+                        return new TestEventSourceStorer(100);
+                    });
+                });
+            });
+
+            var app = builder.Build();
+            var services = app.Services;
+
+            var eventSourceStorer = services.GetRequiredService<IEventSourceStorer>();
+            eventSourceStorer.GetType().Name.Should().Be(nameof(TestEventSourceStorer));
+        }
     }
 }
