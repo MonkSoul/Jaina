@@ -2,7 +2,6 @@ using FluentAssertions;
 using Jaina.EventBus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.VisualStudio.TestPlatform.Utilities;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -10,7 +9,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
-using Xunit.Sdk;
 
 namespace Jaina.UnitTests
 {
@@ -271,6 +269,24 @@ namespace Jaina.UnitTests
             await Task.Delay(1000);
 
             await eventBusHostedService.StopAsync(cancellationTokenSource.Token);
+        }
+
+        [Fact]
+        public void TestBatchRegisteSubscribers()
+        {
+            var builder = Host.CreateDefaultBuilder();
+            builder.ConfigureServices(services =>
+            {
+                services.AddEventBus(builder =>
+                {
+                    builder.AddSubscribers(this.GetType().Assembly);
+                });
+
+                services.Count(s => s.ServiceType == typeof(IEventSubscriber) && s.Lifetime == ServiceLifetime.Singleton).Should().Be(2);
+            });
+
+            var app = builder.Build();
+            var services = app.Services;
         }
     }
 }

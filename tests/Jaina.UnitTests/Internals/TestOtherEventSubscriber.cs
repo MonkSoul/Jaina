@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Jaina.UnitTests
 {
-    internal class TestOtherEventSubscriber : IEventSubscriber
+    public class TestOtherEventSubscriber : IEventSubscriber
     {
         [EventSubscribe("Unit:Other:Test")]
         public Task CreateTest(EventHandlerExecutingContext context)
