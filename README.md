@@ -93,6 +93,9 @@ services.AddEventBus(builder =>
 {
     // 注册 ToDo 事件订阅者
     builder.AddSubscriber<ToDoEventSubscriber>();
+
+    // 批量注册事件订阅者
+    builder.AddSubscribers(ass1, ass2, ....);
 });
 ```
 
