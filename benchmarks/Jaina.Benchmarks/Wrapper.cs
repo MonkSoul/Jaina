@@ -1,21 +1,20 @@
 ﻿using System;
 
-namespace Jaina.Benchmarks
+namespace Jaina.Benchmarks;
+
+public sealed class Wrapper
 {
-    public sealed class Wrapper
+    public Wrapper(string eventId)
     {
-        public Wrapper(string eventId)
-        {
-            EventId = eventId;
-        }
+        EventId = eventId;
+    }
 
-        public string EventId { get; set; }
+    public string EventId { get; set; }
 
-        public DateTime CreatedTime { get; } = DateTime.UtcNow;
+    public DateTime CreatedTime { get; } = DateTime.UtcNow;
 
-        public bool ShouldRun(string eventId)
-        {
-            return EventId == eventId;
-        }
+    public bool ShouldRun(string eventId)
+    {
+        return EventId == eventId;
     }
 }
