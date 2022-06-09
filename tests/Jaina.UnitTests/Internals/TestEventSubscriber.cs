@@ -30,4 +30,10 @@ public class TestEventSubscriber : IEventSubscriber
         }
         return Task.CompletedTask;
     }
+
+    [EventSubscribe(TestEnum.Message)]
+    public Task TestEnumMessage(EventHandlerExecutingContext context)
+    {
+        return Task.CompletedTask;
+    }
 }

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2020-2021 百小僧, Baiqian Co.,Ltd.
+﻿// Copyright (c) 2020-2022 百小僧, Baiqian Co.,Ltd.
 // Jaina is licensed under Mulan PSL v2.
 // You can use this software according to the terms and conditions of the Mulan PSL v2.
 // You may obtain a copy of Mulan PSL v2 at:
@@ -6,6 +6,7 @@
 // THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 // See the Mulan PSL v2 for more details.
 
+using Jaina.Extensitions.EventBus;
 using System;
 
 namespace Jaina.EventBus;
@@ -24,9 +25,18 @@ public sealed class EventSubscribeAttribute : Attribute
     /// 构造函数
     /// </summary>
     /// <param name="eventId">事件 Id</param>
-    public EventSubscribeAttribute(string eventId)
+    /// <remarks>只支持事件类型和 Enum 类型</remarks>
+    public EventSubscribeAttribute(object eventId)
     {
-        EventId = eventId;
+        if (eventId is string)
+        {
+            EventId = eventId as string;
+        }
+        else if (eventId is Enum)
+        {
+            EventId = (eventId as Enum).ParseToString();
+        }
+        else throw new ArgumentException("Only support string or Enum data type.");
     }
 
     /// <summary>

@@ -15,6 +15,7 @@ namespace Jaina.UnitTests;
 public class JainaUnitTest
 {
     protected readonly ITestOutputHelper Output;
+
     public JainaUnitTest(ITestOutputHelper tempOutput)
     {
         Output = tempOutput;
@@ -119,7 +120,7 @@ public class JainaUnitTest
             var eventHandlers = eventHandlersField.GetValue(eventBusHostedService);
 
             var _hashSetType = eventHandlers.GetType();
-            _hashSetType.Invoking(t => t.GetProperty("Count").GetValue(eventHandlers).ToString().Should().Be("5")).Should().NotThrow();
+            _hashSetType.Invoking(t => t.GetProperty("Count").GetValue(eventHandlers).ToString().Should().Be("6")).Should().NotThrow();
         }).Should().NotThrow();
     }
 
@@ -230,6 +231,37 @@ public class JainaUnitTest
         await Task.Delay(1000);
 
         ThreadStaticValue.PublishValue.Should().Be(11);
+
+        await eventBusHostedService.StopAsync(cancellationTokenSource.Token);
+    }
+
+    [Fact]
+    public async Task TestPublisherEnum()
+    {
+        var builder = Host.CreateDefaultBuilder();
+        builder.ConfigureServices(services =>
+        {
+            services.AddEventBus(builder =>
+            {
+                builder.AddSubscriber<TestEventSubscriber>();
+            });
+        });
+
+        var app = builder.Build();
+        var services = app.Services;
+
+        var eventBusHostedService = services.GetService<IHostedService>() as BackgroundService;
+        var cancellationTokenSource = new CancellationTokenSource();
+        await eventBusHostedService.StartAsync(cancellationTokenSource.Token);
+
+        var eventPublisher = services.GetService<IEventPublisher>();
+        ThreadStaticValue.PulishValueEnum = 1;
+
+        await eventPublisher.PublishAsync(TestEnum.Message, 1);
+
+        await Task.Delay(1000);
+
+        ThreadStaticValue.PulishValueEnum.Should().Be(1);
 
         await eventBusHostedService.StopAsync(cancellationTokenSource.Token);
     }
