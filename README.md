@@ -56,6 +56,7 @@ public class ToDoEventSubscriber : IEventSubscriber
     }
 
     [EventSubscribe("ToDo:Create")] // 支持多个
+    [EventSubscribe(YourEnum.Message)]   // 支持枚举
     public async Task CreateToDo(EventHandlerExecutingContext context)
     {
         var todo = context.Source;
@@ -81,6 +82,8 @@ public class ToDoController : ControllerBase
     public async Task CreateDoTo(string name)
     {
         await _eventPublisher.PublishAsync(new ChannelEventSource("ToDo:Create", name));
+        // 简化版本
+        await _eventPublisher.PublishAsync("ToDo:Create", name);
     }
 }
 ```
