@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>net5.0;net6.0;net7.0</TargetFrameworks>
-		<Version>3.0.0</Version>
+		<Version>3.0.1</Version>
 		<Description>.NET 事件总线，简化项目、类库、线程、服务等之间的通信，代码更少，质量更好。</Description>
 	</PropertyGroup>
 
