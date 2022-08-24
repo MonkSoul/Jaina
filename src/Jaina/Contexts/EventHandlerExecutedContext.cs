@@ -6,8 +6,7 @@
 // THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 // See the Mulan PSL v2 for more details.
 
-using System;
-using System.Collections.Generic;
+using System.Reflection;
 
 namespace Jaina.EventBus;
 
@@ -21,8 +20,13 @@ public sealed class EventHandlerExecutedContext : EventHandlerContext
     /// </summary>
     /// <param name="eventSource">事件源（事件承载对象）</param>
     /// <param name="properties">共享上下文数据</param>
-    internal EventHandlerExecutedContext(IEventSource eventSource, IDictionary<object, object> properties)
-        : base(eventSource, properties)
+    /// <param name="handlerMethod">触发的方法</param>
+    /// <param name="attribute">订阅特性</param>
+    internal EventHandlerExecutedContext(IEventSource eventSource
+        , IDictionary<object, object> properties
+        , MethodInfo handlerMethod
+        , EventSubscribeAttribute attribute)
+        : base(eventSource, properties, handlerMethod, attribute)
     {
     }
 

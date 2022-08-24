@@ -9,21 +9,18 @@
 namespace Jaina.EventBus;
 
 /// <summary>
-/// 事件处理程序监视器
+/// 事件订阅器操作选项
 /// </summary>
-public interface IEventHandlerMonitor
+/// <remarks>控制动态新增/删除事件订阅器</remarks>
+internal enum EventSubscribeOperates
 {
     /// <summary>
-    /// 事件处理程序执行前
+    /// 添加一条订阅器
     /// </summary>
-    /// <param name="context">上下文</param>
-    /// <returns><see cref="Task"/> 实例</returns>
-    Task OnExecutingAsync(EventHandlerExecutingContext context);
+    Append,
 
     /// <summary>
-    /// 事件处理程序执行后
+    /// 删除一条订阅器
     /// </summary>
-    /// <param name="context">上下文</param>
-    /// <returns><see cref="Task"/> 实例</returns>
-    Task OnExecutedAsync(EventHandlerExecutedContext context);
+    Remove
 }

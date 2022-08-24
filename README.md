@@ -63,6 +63,30 @@ public class ToDoEventSubscriber : IEventSubscriber
         _logger.LogInformation("创建一个 ToDo：{Name}", todo.Payload);
         await Task.CompletedTask;
     }
+
+    // 支持枚举类型
+    [EventSubscribe(YourEnum.Some)]
+    public async Task EnumHandler(EventHandlerExecutingContext context)
+    {
+        var eventEnum = context.Source.EventId.ParseToEnum(); // 将事件 Id 转换成枚举对象
+        await Task.CompletedTask;
+    }
+    // 支持正则表达式匹配
+    [EventSubscribe("(^1[3456789][0-9]{9}$)|((^[0-9]{3,4}\\-[0-9]{3,8}$)|(^[0-9]{3,8}$)|(^\\([0-9]{3,4}\\)[0-9]{3,8}$)|(^0{0,1}13[0-9]{9}$))")]
+    public async Task RegexHandler(EventHandlerExecutingContext context)
+    {
+        var eventId = context.Source.EventId;
+        await Task.CompletedTask;
+    }
+     // 支持多种异常重试配置
+    [EventSubscribe("test:error", NumRetries = 3)]
+    [EventSubscribe("test:error", NumRetries = 3, RetryTimeout = 1000)] // 重试间隔时间
+    [EventSubscribe("test:error", NumRetries = 3, ExceptionTypes = new[] { typeof(ArgumentException) })]    // 特定类型异常才重试
+    public async Task ExceptionHandler(EventHandlerExecutingContext context)
+    {
+        var eventId = context.Source.EventId;
+        await Task.CompletedTask;
+    }
 }
 ```
 
@@ -96,6 +120,9 @@ services.AddEventBus(builder =>
 {
     // 注册 ToDo 事件订阅者
     builder.AddSubscriber<ToDoEventSubscriber>();
+
+    // 通过类型注册
+    builder.AddSubscriber(typeof(ToDoEventSubscriber));
 
     // 批量注册事件订阅者
     builder.AddSubscribers(ass1, ass2, ....);

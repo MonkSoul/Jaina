@@ -6,8 +6,8 @@
 // THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 // See the Mulan PSL v2 for more details.
 
-using System;
-using System.Threading.Tasks;
+using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace Jaina.EventBus;
 
@@ -37,12 +37,28 @@ internal sealed class EventHandlerWrapper
     internal Func<EventHandlerExecutingContext, Task> Handler { get; set; }
 
     /// <summary>
+    /// 触发的方法
+    /// </summary>
+    internal MethodInfo HandlerMethod { get; set; }
+
+    /// <summary>
+    /// 订阅特性
+    /// </summary>
+    internal EventSubscribeAttribute Attribute { get; set; }
+
+    /// <summary>
+    /// 正则表达式
+    /// </summary>
+    internal Regex Pattern { get; set; }
+
+    /// <summary>
     /// 是否符合条件执行处理程序
     /// </summary>
+    /// <remarks>支持正则表达式</remarks>
     /// <param name="eventId">事件 Id</param>
     /// <returns><see cref="bool"/></returns>
     internal bool ShouldRun(string eventId)
     {
-        return EventId == eventId;
+        return EventId == eventId || Pattern.IsMatch(eventId);
     }
 }
