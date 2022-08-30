@@ -125,7 +125,7 @@ internal sealed class EventBusHostedService : BackgroundService
     /// </summary>
     /// <param name="stoppingToken">后台主机服务停止时取消任务 Token</param>
     /// <returns><see cref="Task"/> 实例</returns>
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected async override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("EventBus Hosted Service is running.");
 
@@ -183,15 +183,15 @@ internal sealed class EventBusHostedService : BackgroundService
         // 创建一个任务工厂并保证执行任务都使用当前的计划程序
         var taskFactory = new TaskFactory(System.Threading.Tasks.TaskScheduler.Current);
 
+        // 创建共享上下文数据对象
+        var properties = new Dictionary<object, object>();
+
         // 逐条创建新线程调用
         foreach (var eventHandlerThatShouldRun in eventHandlersThatShouldRun)
         {
             // 创建新的线程执行
             await taskFactory.StartNew(async () =>
             {
-                // 创建共享上下文数据对象
-                var properties = new Dictionary<object, object>();
-
                 // 获取特性信息，可能为 null
                 var eventSubscribeAttribute = eventHandlerThatShouldRun.Attribute;
 
@@ -304,7 +304,6 @@ internal sealed class EventBusHostedService : BackgroundService
             }
         }
     }
-
 
     /// <summary>
     /// 检查是否开启模糊匹配事件 Id 功能

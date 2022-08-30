@@ -41,7 +41,7 @@ public abstract class EventHandlerContext
     /// <summary>
     /// 共享上下文数据
     /// </summary>
-    public IDictionary<object, object> Properties { get; }
+    public IDictionary<object, object> Properties { get; set; }
 
     /// <summary>
     /// 触发的方法
