@@ -103,6 +103,7 @@ public sealed class ChannelEventSource : IEventSource
     /// 取消任务 Token
     /// </summary>
     /// <remarks>用于取消本次消息处理</remarks>
+    [Newtonsoft.Json.JsonIgnore]
     [System.Text.Json.Serialization.JsonIgnore]
     public CancellationToken CancellationToken { get; set; }
 }

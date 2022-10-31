@@ -23,7 +23,8 @@ internal sealed class Retry
     /// <param name="retryTimeout">重试间隔时间</param>
     /// <param name="finalThrow">是否最终抛异常</param>
     /// <param name="exceptionTypes">异常类型,可多个</param>
-    public static void Invoke(Action action, int numRetries, int retryTimeout = 1000, bool finalThrow = true, Type[] exceptionTypes = default)
+    /// <param name="fallbackPolicy">重试失败回调</param>
+    public static void Invoke(Action action, int numRetries, int retryTimeout = 1000, bool finalThrow = true, Type[] exceptionTypes = default, Action<Exception> fallbackPolicy = default)
     {
         if (action == null) throw new ArgumentNullException(nameof(action));
 
@@ -31,7 +32,12 @@ internal sealed class Retry
         {
             action();
             await Task.CompletedTask;
-        }, numRetries, retryTimeout, finalThrow, exceptionTypes).GetAwaiter().GetResult();
+        }, numRetries, retryTimeout, finalThrow, exceptionTypes, fallbackPolicy == null ? null
+        : async (ex) =>
+        {
+            fallbackPolicy?.Invoke(ex);
+            await Task.CompletedTask;
+        }).GetAwaiter().GetResult();
     }
 
     /// <summary>
@@ -42,7 +48,9 @@ internal sealed class Retry
     /// <param name="retryTimeout">重试间隔时间</param>
     /// <param name="finalThrow">是否最终抛异常</param>
     /// <param name="exceptionTypes">异常类型,可多个</param>
-    public static async Task InvokeAsync(Func<Task> action, int numRetries, int retryTimeout = 1000, bool finalThrow = true, Type[] exceptionTypes = default)
+    /// <param name="fallbackPolicy">重试失败回调</param>
+    /// <returns></returns>
+    public static async Task InvokeAsync(Func<Task> action, int numRetries, int retryTimeout = 1000, bool finalThrow = true, Type[] exceptionTypes = default, Func<Exception, Task> fallbackPolicy = default)
     {
         if (action == null) throw new ArgumentNullException(nameof(action));
 
@@ -66,20 +74,28 @@ internal sealed class Retry
                 // 如果可重试次数小于或等于0，则终止重试
                 if (--numRetries < 0)
                 {
-                    if (finalThrow) throw;
+                    if (finalThrow)
+                    {
+                        await fallbackPolicy?.Invoke(ex);
+                        throw;
+                    }
                     else return;
                 }
 
                 // 如果填写了 exceptionTypes 且异常类型不在 exceptionTypes 之内，则终止重试
                 if (exceptionTypes != null && exceptionTypes.Length > 0 && !exceptionTypes.Any(u => u.IsAssignableFrom(ex.GetType())))
                 {
-                    if (finalThrow) throw;
+                    if (finalThrow)
+                    {
+                        await fallbackPolicy?.Invoke(ex);
+                        throw;
+                    }
                     else return;
                 }
 
                 if (Debugger.IsAttached)
                 {
-                    Console.WriteLine($"You can retry {numRetries} more times.");
+                    Debug.WriteLine($"You can retry {numRetries} more times.");
                 }
 
                 // 如果可重试异常数大于 0，则间隔指定时间后继续执行

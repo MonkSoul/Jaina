@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Logging;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
@@ -21,6 +22,11 @@ namespace Jaina.EventBus;
 internal sealed class EventBusHostedService : BackgroundService
 {
     /// <summary>
+    /// GC 回收默认间隔
+    /// </summary>
+    private const int GC_COLLECT_INTERVAL_SECONDS = 3;
+
+    /// <summary>
     /// 避免由 CLR 的终结器捕获该异常从而终止应用程序，让所有未觉察异常被觉察
     /// </summary>
     internal event EventHandler<UnobservedTaskExceptionEventArgs> UnobservedTaskException;
@@ -28,7 +34,12 @@ internal sealed class EventBusHostedService : BackgroundService
     /// <summary>
     /// 日志对象
     /// </summary>
-    private readonly ILogger<EventBusHostedService> _logger;
+    private readonly ILogger _logger;
+
+    /// <summary>
+    /// 服务提供器
+    /// </summary>
+    private readonly IServiceProvider _serviceProvider;
 
     /// <summary>
     /// 事件源存储器
@@ -58,7 +69,22 @@ internal sealed class EventBusHostedService : BackgroundService
     /// <summary>
     /// 是否启用模糊匹配事件消息
     /// </summary>
-    private bool FuzzyMatch { get; set; }
+    private bool FuzzyMatch { get; }
+
+    /// <summary>
+    /// 是否启用执行完成触发 GC 回收
+    /// </summary>
+    private bool GCCollect { get; }
+
+    /// <summary>
+    /// 是否启用日志记录
+    /// </summary>
+    private bool LogEnabled { get; }
+
+    /// <summary>
+    /// 最近一次收集时间
+    /// </summary>
+    private DateTime? LastGCCollectTime { get; set; }
 
     /// <summary>
     /// 构造函数
@@ -69,19 +95,26 @@ internal sealed class EventBusHostedService : BackgroundService
     /// <param name="eventSubscribers">事件订阅者集合</param>
     /// <param name="useUtcTimestamp">是否使用 Utc 时间</param>
     /// <param name="fuzzyMatch">是否启用模糊匹配事件消息</param>
-    public EventBusHostedService(ILogger<EventBusHostedService> logger
+    /// <param name="gcCollect">是否启用执行完成触发 GC 回收</param>
+    /// <param name="logEnabled">是否启用日志记录</param>
+    public EventBusHostedService(ILogger<EventBusService> logger
         , IServiceProvider serviceProvider
         , IEventSourceStorer eventSourceStorer
         , IEnumerable<IEventSubscriber> eventSubscribers
         , bool useUtcTimestamp
-        , bool fuzzyMatch)
+        , bool fuzzyMatch
+        , bool gcCollect
+        , bool logEnabled)
     {
         _logger = logger;
+        _serviceProvider = serviceProvider;
         _eventSourceStorer = eventSourceStorer;
         Monitor = serviceProvider.GetService<IEventHandlerMonitor>();
         Executor = serviceProvider.GetService<IEventHandlerExecutor>();
         UseUtcTimestamp = useUtcTimestamp;
         FuzzyMatch = fuzzyMatch;
+        GCCollect = gcCollect;
+        LogEnabled = logEnabled;
 
         var bindingAttr = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly;
         // 逐条获取事件处理程序并进行包装
@@ -111,7 +144,8 @@ internal sealed class EventBusHostedService : BackgroundService
                         Handler = handler,
                         HandlerMethod = eventHandlerMethod,
                         Attribute = eventSubscribeAttribute,
-                        Pattern = CheckFuzzyMatch(eventSubscribeAttribute.FuzzyMatch) ? new Regex(eventSubscribeAttribute.EventId, RegexOptions.Singleline) : default
+                        Pattern = CheckIsSetFuzzyMatch(eventSubscribeAttribute.FuzzyMatch) ? new Regex(eventSubscribeAttribute.EventId, RegexOptions.Singleline) : default,
+                        GCCollect = CheckIsSetGCCollect(eventSubscribeAttribute.GCCollect)
                     };
 
                     _eventHandlers.TryAdd(wrapper, wrapper);
@@ -125,13 +159,13 @@ internal sealed class EventBusHostedService : BackgroundService
     /// </summary>
     /// <param name="stoppingToken">后台主机服务停止时取消任务 Token</param>
     /// <returns><see cref="Task"/> 实例</returns>
-    protected async override Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("EventBus Hosted Service is running.");
+        Log(LogLevel.Information, "EventBus Hosted Service is running.");
 
         // 注册后台主机服务停止监听
         stoppingToken.Register(() =>
-            _logger.LogDebug($"EventBus Hosted Service is stopping."));
+           Log(LogLevel.Debug, $"EventBus Hosted Service is stopping."));
 
         // 监听服务是否取消
         while (!stoppingToken.IsCancellationRequested)
@@ -140,7 +174,7 @@ internal sealed class EventBusHostedService : BackgroundService
             await BackgroundProcessing(stoppingToken);
         }
 
-        _logger.LogCritical($"EventBus Hosted Service is stopped.");
+        Log(LogLevel.Critical, $"EventBus Hosted Service is stopped.");
     }
 
     /// <summary>
@@ -164,7 +198,7 @@ internal sealed class EventBusHostedService : BackgroundService
         // 空检查
         if (string.IsNullOrWhiteSpace(eventSource?.EventId))
         {
-            _logger.LogWarning("Invalid EventId, EventId cannot be <null> or an empty string.");
+            Log(LogLevel.Warning, "Invalid EventId, EventId cannot be <null> or an empty string.");
 
             return;
         }
@@ -175,7 +209,7 @@ internal sealed class EventBusHostedService : BackgroundService
         // 空订阅
         if (!eventHandlersThatShouldRun.Any())
         {
-            _logger.LogWarning("Subscriber with event ID <{EventId}> was not found.", eventSource.EventId);
+            Log(LogLevel.Warning, "Subscriber with event ID <{EventId}> was not found.", new[] { eventSource.EventId });
 
             return;
         }
@@ -186,11 +220,11 @@ internal sealed class EventBusHostedService : BackgroundService
         // 创建共享上下文数据对象
         var properties = new Dictionary<object, object>();
 
-        // 逐条创建新线程调用
-        foreach (var eventHandlerThatShouldRun in eventHandlersThatShouldRun)
+        // 通过并行方式提高吞吐量
+        Parallel.ForEach(eventHandlersThatShouldRun, (eventHandlerThatShouldRun) =>
         {
             // 创建新的线程执行
-            await taskFactory.StartNew(async () =>
+            taskFactory.StartNew(async () =>
             {
                 // 获取特性信息，可能为 null
                 var eventSubscribeAttribute = eventHandlerThatShouldRun.Attribute;
@@ -221,11 +255,17 @@ internal sealed class EventBusHostedService : BackgroundService
                     // 判断是否自定义了执行器
                     if (Executor == default)
                     {
-                        // 运行重试
+                        // 判断是否自定义了重试失败回调服务
+                        var fallbackPolicyService = eventSubscribeAttribute?.FallbackPolicy == null
+                            ? null
+                            : _serviceProvider.GetService(eventSubscribeAttribute.FallbackPolicy) as IEventFallbackPolicy;
+
+                        // 执行重试
                         await Retry.InvokeAsync(async () =>
                         {
                             await eventHandlerThatShouldRun.Handler!(eventHandlerExecutingContext);
-                        }, eventSubscribeAttribute?.NumRetries ?? 0, eventSubscribeAttribute?.RetryTimeout ?? 1000, exceptionTypes: eventSubscribeAttribute?.ExceptionTypes);
+                        }, eventSubscribeAttribute?.NumRetries ?? 0, eventSubscribeAttribute?.RetryTimeout ?? 1000, exceptionTypes: eventSubscribeAttribute?.ExceptionTypes
+                            , fallbackPolicy: fallbackPolicyService == null ? null : async (ex) => await fallbackPolicyService.CallbackAsync(eventHandlerExecutingContext, ex));
                     }
                     else
                     {
@@ -235,7 +275,7 @@ internal sealed class EventBusHostedService : BackgroundService
                 catch (Exception ex)
                 {
                     // 输出异常日志
-                    _logger.LogError(ex, "Error occurred executing {EventId}.", eventSource.EventId);
+                    Log(LogLevel.Error, "Error occurred executing {EventId}.", new[] { eventSource.EventId }, ex);
 
                     // 标记异常
                     executionException = new InvalidOperationException(string.Format("Error occurred executing {0}.", eventSource.EventId), ex);
@@ -263,9 +303,17 @@ internal sealed class EventBusHostedService : BackgroundService
 
                         await Monitor.OnExecutedAsync(eventHandlerExecutedContext);
                     }
+
+                    // 判断是否执行完成后调用 GC 回收
+                    var nowTime = DateTime.UtcNow;
+                    if (eventHandlerThatShouldRun.GCCollect && (LastGCCollectTime == null || (nowTime - LastGCCollectTime.Value).TotalSeconds > GC_COLLECT_INTERVAL_SECONDS))
+                    {
+                        LastGCCollectTime = nowTime;
+                        GC.Collect();
+                    }
                 }
             }, stoppingToken);
-        }
+        });
     }
 
     /// <summary>
@@ -288,11 +336,18 @@ internal sealed class EventBusHostedService : BackgroundService
                 Attribute = subscribeOperateSource.Attribute,
                 HandlerMethod = subscribeOperateSource.HandlerMethod,
                 Handler = subscribeOperateSource.Handler,
-                Pattern = CheckFuzzyMatch(subscribeOperateSource.Attribute?.FuzzyMatch) ? new Regex(eventId, RegexOptions.Singleline) : default
+                Pattern = CheckIsSetFuzzyMatch(subscribeOperateSource.Attribute?.FuzzyMatch) ? new Regex(eventId, RegexOptions.Singleline) : default,
+                GCCollect = CheckIsSetGCCollect(subscribeOperateSource.Attribute?.GCCollect)
             };
 
             // 追加到集合中
-            _eventHandlers.TryAdd(wrapper, wrapper);
+            var succeeded = _eventHandlers.TryAdd(wrapper, wrapper);
+
+            // 输出日志
+            if (succeeded)
+            {
+                Log(LogLevel.Information, "Subscriber with event ID <{EventId}> was appended successfully.", new[] { eventId });
+            }
         }
         // 处理删除
         else if (subscribeOperateSource.Operate == EventSubscribeOperates.Remove)
@@ -300,7 +355,13 @@ internal sealed class EventBusHostedService : BackgroundService
             // 删除所有匹配事件 Id 的处理程序
             foreach (var wrapper in _eventHandlers.Keys)
             {
-                if (wrapper.EventId == eventId) _eventHandlers.TryRemove(wrapper, out _);
+                if (wrapper.EventId != eventId) continue;
+
+                var succeeded = _eventHandlers.TryRemove(wrapper, out _);
+                if (!succeeded) continue;
+
+                // 输出日志
+                Log(LogLevel.Warning, "Subscriber<{Name}> with event ID <{EventId}> was remove.", new[] { wrapper.HandlerMethod?.Name, eventId });
             }
         }
     }
@@ -310,10 +371,44 @@ internal sealed class EventBusHostedService : BackgroundService
     /// </summary>
     /// <param name="fuzzyMatch"></param>
     /// <returns></returns>
-    private bool CheckFuzzyMatch(object fuzzyMatch)
+    private bool CheckIsSetFuzzyMatch(object fuzzyMatch)
     {
         return fuzzyMatch == null
             ? FuzzyMatch
             : Convert.ToBoolean(fuzzyMatch);
+    }
+
+    /// <summary>
+    /// 检查是否开启执行完成触发 GC 回收
+    /// </summary>
+    /// <param name="gcCollect"></param>
+    /// <returns></returns>
+    private bool CheckIsSetGCCollect(object gcCollect)
+    {
+        return gcCollect == null
+            ? GCCollect
+            : Convert.ToBoolean(gcCollect);
+    }
+
+    /// <summary>
+    /// 记录日志
+    /// </summary>
+    /// <param name="logLevel">日志级别</param>
+    /// <param name="message">消息</param>
+    /// <param name="args">参数</param>
+    /// <param name="ex">异常</param>
+    private void Log(LogLevel logLevel, string message, object[] args = default, Exception ex = default)
+    {
+        // 如果未启用日志记录则直接返回
+        if (!LogEnabled) return;
+
+        if (logLevel == LogLevel.Error)
+        {
+            _logger.LogError(ex, message, args);
+        }
+        else
+        {
+            _logger.Log(logLevel, message, args);
+        }
     }
 }
