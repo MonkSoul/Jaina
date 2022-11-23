@@ -1,17 +1,23 @@
 ﻿<Project>
 	<PropertyGroup>
+		<TargetFrameworks>net5.0;net6.0;net7.0</TargetFrameworks>
+		<ImplicitUsings>enable</ImplicitUsings>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<IncludeSymbols>true</IncludeSymbols>
 		<Authors>百小僧</Authors>
 		<Company>Baiqian Co.,Ltd.</Company>
-		<Product>Jaina</Product>
-		<Copyright>© 2020-2021 百小僧, Baiqian Co.,Ltd.</Copyright>
+		<Product>Sundial</Product>
+		<Copyright>© 2020-2022 百小僧, Baiqian Co.,Ltd.</Copyright>
 		<RepositoryUrl>https://gitee.com/dotnetchina/Jaina</RepositoryUrl>
 		<RepositoryType>Gitee</RepositoryType>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
-		<PackageLicenseExpression>MulanPSL-2.0</PackageLicenseExpression>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageProjectUrl>https://gitee.com/dotnetchina/Jaina</PackageProjectUrl>
 		<PackageOutputPath>../nupkgs</PackageOutputPath>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<EmbedUntrackedSource>true</EmbedUntrackedSource>
+		<EmbedAllSources>true</EmbedAllSources>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -21,5 +27,9 @@
 	<PropertyGroup>
 		<LangVersion>latest</LangVersion>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\..\README.md" Pack="true" PackagePath="\"/>
+	</ItemGroup>
 
 </Project>

@@ -1,16 +1,30 @@
-﻿// Copyright (c) 2020-2022 百小僧, Baiqian Co.,Ltd.
-// Jaina is licensed under Mulan PSL v2.
-// You can use this software according to the terms and conditions of the Mulan PSL v2.
-// You may obtain a copy of Mulan PSL v2 at:
-//             https://gitee.com/dotnetchina/Jaina/blob/master/LICENSE
-// THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
-// See the Mulan PSL v2 for more details.
+﻿// MIT License
+//
+// Copyright (c) 2020-2022 百小僧, Baiqian Co.,Ltd and Contributors
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Reflection;
 
-namespace Jaina.EventBus;
+namespace Jaina;
 
 /// <summary>
 /// 事件总线配置选项构建器
@@ -155,6 +169,57 @@ public sealed class EventBusOptionsBuilder
     public EventBusOptionsBuilder ReplaceStorer(Func<IServiceProvider, IEventSourceStorer> implementationFactory)
     {
         _eventSourceStorerImplementationFactory = implementationFactory;
+        return this;
+    }
+
+    /// <summary>
+    /// 替换事件源存储器（如果初始化失败则回退为默认的）
+    /// </summary>
+    /// <param name="createStorer"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
+    public EventBusOptionsBuilder ReplaceStorerOrFallback(Func<IEventSourceStorer> createStorer)
+    {
+        // 空检查
+        if (createStorer == null) throw new ArgumentNullException(nameof(createStorer));
+
+        try
+        {
+            // 创建事件源存储器
+            var storer = createStorer.Invoke();
+
+            // 替换事件源存储器
+            ReplaceStorer(_ => storer);
+        }
+        catch { }
+
+        return this;
+    }
+
+    /// <summary>
+    /// 替换事件源存储器（如果初始化失败则回退为默认的）
+    /// </summary>
+    /// <param name="createStorer"></param>
+    /// <returns></returns>
+    /// <exception cref="ArgumentNullException"></exception>
+    public EventBusOptionsBuilder ReplaceStorerOrFallback(Func<IServiceProvider, IEventSourceStorer> createStorer)
+    {
+        // 空检查
+        if (createStorer == null) throw new ArgumentNullException(nameof(createStorer));
+
+        // 替换事件源存储器
+        ReplaceStorer(serviceProvider =>
+        {
+            try
+            {
+                return createStorer.Invoke(serviceProvider);
+            }
+            catch
+            {
+                return new ChannelEventSourceStorer(ChannelCapacity);
+            }
+        });
+
         return this;
     }
 

@@ -1,6 +1,6 @@
 # Jaina
 
-[![license](https://img.shields.io/badge/license-MulanPSL--2.0-orange?cacheSeconds=10800)](https://gitee.com/dotnetchina/Jaina/blob/master/LICENSE) [![nuget](https://img.shields.io/nuget/v/Jaina.svg?cacheSeconds=10800)](https://www.nuget.org/packages/Jaina) [![dotNET China](https://img.shields.io/badge/organization-dotNET%20China-yellow?cacheSeconds=10800)](https://gitee.com/dotnetchina)
+[![license](https://img.shields.io/badge/license-MIT-orange?cacheSeconds=10800)](https://gitee.com/dotnetchina/Jaina/blob/master/LICENSE) [![nuget](https://img.shields.io/nuget/v/Jaina.svg?cacheSeconds=10800)](https://www.nuget.org/packages/Jaina) [![dotNET China](https://img.shields.io/badge/organization-dotNET%20China-yellow?cacheSeconds=10800)](https://gitee.com/dotnetchina)
 
 .NET 事件总线，简化项目、类库、线程、服务等之间的通信，代码更少，质量更好。‎
 
@@ -138,11 +138,11 @@ info: Jaina.Samples.ToDoEventSubscriber[0]
       创建一个 ToDo：Jaina
 ```
 
-[更多文档](./docs)
+[更多文档](https://furion.baiqian.ltd/docs/event-bus)
 
 ## 文档
 
-您可以在[主页](./docs)找到 Jaina 文档。
+您可以在[主页](https://furion.baiqian.ltd/docs/event-bus)找到 Jaina 文档。
 
 ## 贡献
 
@@ -150,14 +150,28 @@ info: Jaina.Samples.ToDoEventSubscriber[0]
 
 ## 许可证
 
-Jaina 采用 [MulanPSL-2.0](./LICENSE) 开源许可证。
+Jaina 采用 [MIT](./LICENSE) 开源许可证。
 
 ```
-Copyright (c) 2020-2021 百小僧, Baiqian Co.,Ltd.
-Jaina is licensed under Mulan PSL v2.
-You can use this software according to the terms andconditions of the Mulan PSL v2.
-You may obtain a copy of Mulan PSL v2 at:
-            https://gitee.com/dotnetchina/Jaina/blob/master/LICENSE
-THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUTWARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED,INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
-See the Mulan PSL v2 for more details.
+MIT License
+
+Copyright (c) 2020-2022 百小僧, Baiqian Co.,Ltd.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ```

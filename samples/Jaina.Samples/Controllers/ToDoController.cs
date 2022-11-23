@@ -1,5 +1,4 @@
-﻿using Jaina.EventBus;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace Jaina.Samples.Controllers;
 

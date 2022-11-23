@@ -1,10 +1,24 @@
-﻿// Copyright (c) 2020-2022 百小僧, Baiqian Co.,Ltd.
-// Jaina is licensed under Mulan PSL v2.
-// You can use this software according to the terms and conditions of the Mulan PSL v2.
-// You may obtain a copy of Mulan PSL v2 at:
-//             https://gitee.com/dotnetchina/Jaina/blob/master/LICENSE
-// THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT, MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
-// See the Mulan PSL v2 for more details.
+﻿// MIT License
+//
+// Copyright (c) 2020-2022 百小僧, Baiqian Co.,Ltd and Contributors
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -14,7 +28,7 @@ using System.Logging;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
-namespace Jaina.EventBus;
+namespace Jaina;
 
 /// <summary>
 /// 事件总线后台主机服务
@@ -50,41 +64,6 @@ internal sealed class EventBusHostedService : BackgroundService
     /// 事件处理程序集合
     /// </summary>
     private readonly ConcurrentDictionary<EventHandlerWrapper, EventHandlerWrapper> _eventHandlers = new();
-
-    /// <summary>
-    /// 事件处理程序监视器
-    /// </summary>
-    private IEventHandlerMonitor Monitor { get; }
-
-    /// <summary>
-    /// 事件处理程序执行器
-    /// </summary>
-    private IEventHandlerExecutor Executor { get; }
-
-    /// <summary>
-    /// 是否使用 UTC 时间
-    /// </summary>
-    private bool UseUtcTimestamp { get; }
-
-    /// <summary>
-    /// 是否启用模糊匹配事件消息
-    /// </summary>
-    private bool FuzzyMatch { get; }
-
-    /// <summary>
-    /// 是否启用执行完成触发 GC 回收
-    /// </summary>
-    private bool GCCollect { get; }
-
-    /// <summary>
-    /// 是否启用日志记录
-    /// </summary>
-    private bool LogEnabled { get; }
-
-    /// <summary>
-    /// 最近一次收集时间
-    /// </summary>
-    private DateTime? LastGCCollectTime { get; set; }
 
     /// <summary>
     /// 构造函数
@@ -145,7 +124,8 @@ internal sealed class EventBusHostedService : BackgroundService
                         HandlerMethod = eventHandlerMethod,
                         Attribute = eventSubscribeAttribute,
                         Pattern = CheckIsSetFuzzyMatch(eventSubscribeAttribute.FuzzyMatch) ? new Regex(eventSubscribeAttribute.EventId, RegexOptions.Singleline) : default,
-                        GCCollect = CheckIsSetGCCollect(eventSubscribeAttribute.GCCollect)
+                        GCCollect = CheckIsSetGCCollect(eventSubscribeAttribute.GCCollect),
+                        Order = eventSubscribeAttribute.Order
                     };
 
                     _eventHandlers.TryAdd(wrapper, wrapper);
@@ -153,6 +133,41 @@ internal sealed class EventBusHostedService : BackgroundService
             }
         }
     }
+
+    /// <summary>
+    /// 事件处理程序监视器
+    /// </summary>
+    private IEventHandlerMonitor Monitor { get; }
+
+    /// <summary>
+    /// 事件处理程序执行器
+    /// </summary>
+    private IEventHandlerExecutor Executor { get; }
+
+    /// <summary>
+    /// 是否使用 UTC 时间
+    /// </summary>
+    private bool UseUtcTimestamp { get; }
+
+    /// <summary>
+    /// 是否启用模糊匹配事件消息
+    /// </summary>
+    private bool FuzzyMatch { get; }
+
+    /// <summary>
+    /// 是否启用执行完成触发 GC 回收
+    /// </summary>
+    private bool GCCollect { get; }
+
+    /// <summary>
+    /// 是否启用日志记录
+    /// </summary>
+    private bool LogEnabled { get; }
+
+    /// <summary>
+    /// 最近一次收集时间
+    /// </summary>
+    private DateTime? LastGCCollectTime { get; set; }
 
     /// <summary>
     /// 执行后台任务
@@ -178,7 +193,7 @@ internal sealed class EventBusHostedService : BackgroundService
     }
 
     /// <summary>
-    /// 后台调用事件处理程序
+    /// 后台调用处理程序
     /// </summary>
     /// <param name="stoppingToken">后台主机服务停止时取消任务 Token</param>
     /// <returns><see cref="Task"/> 实例</returns>
@@ -204,7 +219,7 @@ internal sealed class EventBusHostedService : BackgroundService
         }
 
         // 查找事件 Id 匹配的事件处理程序
-        var eventHandlersThatShouldRun = _eventHandlers.Keys.Where(t => t.ShouldRun(eventSource.EventId));
+        var eventHandlersThatShouldRun = _eventHandlers.Where(t => t.Key.ShouldRun(eventSource.EventId)).OrderByDescending(u => u.Value.Order).Select(u => u.Key);
 
         // 空订阅
         if (!eventHandlersThatShouldRun.Any())
@@ -220,7 +235,7 @@ internal sealed class EventBusHostedService : BackgroundService
         // 创建共享上下文数据对象
         var properties = new Dictionary<object, object>();
 
-        // 通过并行方式提高吞吐量
+        // 通过并行方式提高吞吐量并解决 Thread.Sleep 问题
         Parallel.ForEach(eventHandlersThatShouldRun, (eventHandlerThatShouldRun) =>
         {
             // 创建新的线程执行
@@ -260,7 +275,7 @@ internal sealed class EventBusHostedService : BackgroundService
                             ? null
                             : _serviceProvider.GetService(eventSubscribeAttribute.FallbackPolicy) as IEventFallbackPolicy;
 
-                        // 执行重试
+                        // 调用事件处理程序并配置出错执行重试
                         await Retry.InvokeAsync(async () =>
                         {
                             await eventHandlerThatShouldRun.Handler!(eventHandlerExecutingContext);
@@ -328,7 +343,7 @@ internal sealed class EventBusHostedService : BackgroundService
         // 确保事件订阅 Id 和传入的特性 EventId 一致
         if (subscribeOperateSource.Attribute != null && subscribeOperateSource.Attribute.EventId != eventId) throw new InvalidOperationException("Ensure that the <eventId> is consistent with the <EventId> attribute of the EventSubscribeAttribute object.");
 
-        // 处理新增
+        // 处理动态新增
         if (subscribeOperateSource.Operate == EventSubscribeOperates.Append)
         {
             var wrapper = new EventHandlerWrapper(eventId)
@@ -337,7 +352,8 @@ internal sealed class EventBusHostedService : BackgroundService
                 HandlerMethod = subscribeOperateSource.HandlerMethod,
                 Handler = subscribeOperateSource.Handler,
                 Pattern = CheckIsSetFuzzyMatch(subscribeOperateSource.Attribute?.FuzzyMatch) ? new Regex(eventId, RegexOptions.Singleline) : default,
-                GCCollect = CheckIsSetGCCollect(subscribeOperateSource.Attribute?.GCCollect)
+                GCCollect = CheckIsSetGCCollect(subscribeOperateSource.Attribute?.GCCollect),
+                Order = subscribeOperateSource.Attribute?.Order ?? 0
             };
 
             // 追加到集合中
@@ -349,7 +365,7 @@ internal sealed class EventBusHostedService : BackgroundService
                 Log(LogLevel.Information, "Subscriber with event ID <{EventId}> was appended successfully.", new[] { eventId });
             }
         }
-        // 处理删除
+        // 处理动态删除
         else if (subscribeOperateSource.Operate == EventSubscribeOperates.Remove)
         {
             // 删除所有匹配事件 Id 的处理程序

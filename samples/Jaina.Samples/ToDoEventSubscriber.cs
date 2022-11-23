@@ -1,6 +1,4 @@
-﻿using Jaina.EventBus;
-
-namespace Jaina.Samples;
+﻿namespace Jaina.Samples;
 
 // 实现 IEventSubscriber 接口
 public class ToDoEventSubscriber : IEventSubscriber

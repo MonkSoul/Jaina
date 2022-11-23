@@ -1,5 +1,4 @@
-﻿using Jaina.EventBus;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
 namespace Jaina.UnitTests;
 
