@@ -1,13 +1,13 @@
 ﻿<Project>
 	<PropertyGroup>
-		<TargetFrameworks>net5.0;net6.0;net7.0</TargetFrameworks>
+		<TargetFrameworks>net5.0;net6.0;net7.0;net8.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<IncludeSymbols>true</IncludeSymbols>
 		<Authors>百小僧</Authors>
 		<Company>Baiqian Co.,Ltd.</Company>
 		<Product>Sundial</Product>
-		<Copyright>© 2020-2022 百小僧, Baiqian Co.,Ltd.</Copyright>
+		<Copyright>© 2020-present 百小僧, Baiqian Co.,Ltd.</Copyright>
 		<RepositoryUrl>https://gitee.com/dotnetchina/Jaina</RepositoryUrl>
 		<RepositoryType>Gitee</RepositoryType>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
