@@ -102,7 +102,7 @@ internal sealed class EventBusHostedService : BackgroundService
             foreach (var eventHandlerMethod in eventHandlerMethods)
             {
                 // 将方法转换成 Func<EventHandlerExecutingContext, Task> 委托
-                var handler = eventHandlerMethod.CreateDelegate<Func<EventHandlerExecutingContext, Task>>(eventSubscriber);
+                var handler = (Func<EventHandlerExecutingContext, Task>)eventHandlerMethod.CreateDelegate(typeof(Func<EventHandlerExecutingContext, Task>), eventSubscriber);
 
                 // 处理同一个事件处理程序支持多个事件 Id 情况
                 var eventSubscribeAttributes = eventHandlerMethod.GetCustomAttributes<EventSubscribeAttribute>(false);
@@ -166,13 +166,13 @@ internal sealed class EventBusHostedService : BackgroundService
     /// </summary>
     /// <param name="stoppingToken">后台主机服务停止时取消任务 Token</param>
     /// <returns><see cref="Task"/> 实例</returns>
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected async override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        Log(LogLevel.Information, "EventBus Hosted Service is running.");
+        Log(LogLevel.Information, "EventBus hosted service is running.");
 
         // 注册后台主机服务停止监听
         stoppingToken.Register(() =>
-           Log(LogLevel.Debug, $"EventBus Hosted Service is stopping."));
+           Log(LogLevel.Debug, $"EventBus hosted service is stopping."));
 
         // 监听服务是否取消
         while (!stoppingToken.IsCancellationRequested)
@@ -181,7 +181,7 @@ internal sealed class EventBusHostedService : BackgroundService
             await BackgroundProcessing(stoppingToken);
         }
 
-        Log(LogLevel.Critical, $"EventBus Hosted Service is stopped.");
+        Log(LogLevel.Critical, $"EventBus hosted service is stopped.");
     }
 
     /// <summary>
@@ -271,8 +271,16 @@ internal sealed class EventBusHostedService : BackgroundService
                         await Retry.InvokeAsync(async () =>
                         {
                             await eventHandlerThatShouldRun.Handler!(eventHandlerExecutingContext);
-                        }, eventSubscribeAttribute?.NumRetries ?? 0, eventSubscribeAttribute?.RetryTimeout ?? 1000, exceptionTypes: eventSubscribeAttribute?.ExceptionTypes
-                            , fallbackPolicy: fallbackPolicyService == null ? null : async (ex) => await fallbackPolicyService.CallbackAsync(eventHandlerExecutingContext, ex));
+                        }
+                        , eventSubscribeAttribute?.NumRetries ?? 0
+                        , eventSubscribeAttribute?.RetryTimeout ?? 1000
+                        , exceptionTypes: eventSubscribeAttribute?.ExceptionTypes
+                        , fallbackPolicy: fallbackPolicyService == null ? null : async (ex) => await fallbackPolicyService.CallbackAsync(eventHandlerExecutingContext, ex)
+                        , retryAction: (total, times) =>
+                        {
+                            // 输出重试日志
+                            _logger.LogWarning("Retrying {times}/{total} times for {EventId}", times, total, eventSource.EventId);
+                        });
                     }
                     else
                     {

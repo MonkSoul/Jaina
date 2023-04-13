@@ -12,8 +12,6 @@
 // 在任何情况下，作者或版权持有人都不对任何索赔、损害或其他责任负责，无论这些追责来自合同、侵权或其它行为中，
 // 还是产生于、源于或有关于本软件以及本软件的使用或其它处置。
 
-using System.Diagnostics;
-
 namespace Jaina;
 
 /// <summary>
@@ -30,7 +28,14 @@ internal sealed class Retry
     /// <param name="finalThrow">是否最终抛异常</param>
     /// <param name="exceptionTypes">异常类型,可多个</param>
     /// <param name="fallbackPolicy">重试失败回调</param>
-    public static void Invoke(Action action, int numRetries, int retryTimeout = 1000, bool finalThrow = true, Type[] exceptionTypes = default, Action<Exception> fallbackPolicy = default)
+    /// <param name="retryAction">重试时调用方法</param>
+    public static void Invoke(Action action
+        , int numRetries
+        , int retryTimeout = 1000
+        , bool finalThrow = true
+        , Type[] exceptionTypes = default
+        , Action<Exception> fallbackPolicy = default
+        , Action<int, int> retryAction = default)
     {
         if (action == null) throw new ArgumentNullException(nameof(action));
 
@@ -43,7 +48,7 @@ internal sealed class Retry
         {
             fallbackPolicy?.Invoke(ex);
             await Task.CompletedTask;
-        }).GetAwaiter().GetResult();
+        }, retryAction).GetAwaiter().GetResult();
     }
 
     /// <summary>
@@ -55,8 +60,15 @@ internal sealed class Retry
     /// <param name="finalThrow">是否最终抛异常</param>
     /// <param name="exceptionTypes">异常类型,可多个</param>
     /// <param name="fallbackPolicy">重试失败回调</param>
-    /// <returns></returns>
-    public static async Task InvokeAsync(Func<Task> action, int numRetries, int retryTimeout = 1000, bool finalThrow = true, Type[] exceptionTypes = default, Func<Exception, Task> fallbackPolicy = default)
+    /// <param name="retryAction">重试时调用方法</param>
+    /// <returns><see cref="Task"/></returns>
+    public static async Task InvokeAsync(Func<Task> action
+        , int numRetries
+        , int retryTimeout = 1000
+        , bool finalThrow = true
+        , Type[] exceptionTypes = default
+        , Func<Exception, Task> fallbackPolicy = default
+        , Action<int, int> retryAction = default)
     {
         if (action == null) throw new ArgumentNullException(nameof(action));
 
@@ -66,6 +78,9 @@ internal sealed class Retry
             await action();
             return;
         }
+
+        // 存储总的重试次数
+        var totalNumRetries = numRetries;
 
         // 不断重试
         while (true)
@@ -99,10 +114,8 @@ internal sealed class Retry
                     else return;
                 }
 
-                if (Debugger.IsAttached)
-                {
-                    Debug.WriteLine($"You can retry {numRetries} more times.");
-                }
+                // 重试调用委托
+                retryAction?.Invoke(totalNumRetries, totalNumRetries - numRetries);
 
                 // 如果可重试异常数大于 0，则间隔指定时间后继续执行
                 if (retryTimeout > 0) await Task.Delay(retryTimeout);
