@@ -6,8 +6,8 @@
 		<IncludeSymbols>true</IncludeSymbols>
 		<Authors>百小僧</Authors>
 		<Company>百签科技（广东）有限公司</Company>
-		<Product>Sundial</Product>
-		<Copyright>© 2020-present 百小僧, 百签科技（广东）有限公司</Copyright>
+		<Product>Jaina</Product>
+		<Copyright>© 2020-2024 百小僧及百签科技（广东）有限公司</Copyright>
 		<RepositoryUrl>https://gitee.com/dotnetchina/Jaina</RepositoryUrl>
 		<RepositoryType>Gitee</RepositoryType>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
