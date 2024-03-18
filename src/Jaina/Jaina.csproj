@@ -1,31 +1,36 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<Version>4.2.0</Version>
+		<Version>4.3.0</Version>
 		<Description>.NET 事件总线，简化项目、类库、线程、服务等之间的通信，代码更少，质量更好。</Description>
 	</PropertyGroup>
 
 	<ItemGroup Condition=" '$(TargetFramework)' == 'net5.0' ">
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="5.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 	</ItemGroup>
 
 	<ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' ">
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 	</ItemGroup>
 
 	<ItemGroup Condition=" '$(TargetFramework)' == 'net7.0' ">
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 	</ItemGroup>
 
 	<ItemGroup Condition=" '$(TargetFramework)' == 'net8.0' ">
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+	</ItemGroup>
+
+	<ItemGroup Condition=" '$(TargetFramework)' == 'net9.0' ">
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.0-preview.2.24128.5" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0-preview.2.24128.5" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 	</ItemGroup>
 
