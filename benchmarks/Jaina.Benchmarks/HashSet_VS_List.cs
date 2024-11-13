@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Jaina.Benchmarks;
 
-[SimpleJob(RuntimeMoniker.Net50)]
+[SimpleJob(RuntimeMoniker.Net90)]
 public class HashSet_VS_List
 {
     private readonly Random _random = new();
