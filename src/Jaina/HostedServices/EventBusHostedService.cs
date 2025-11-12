@@ -166,7 +166,7 @@ internal sealed class EventBusHostedService : BackgroundService
     /// </summary>
     /// <param name="stoppingToken">后台主机服务停止时取消任务 Token</param>
     /// <returns><see cref="Task"/> 实例</returns>
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected async override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         Log(LogLevel.Information, "EventBus hosted service is running.");
 
@@ -193,6 +193,12 @@ internal sealed class EventBusHostedService : BackgroundService
     {
         // 从事件存储器中读取一条
         var eventSource = await _eventSourceStorer.ReadAsync(stoppingToken);
+
+        // 空检查
+        if (eventSource is null)
+        {
+            return;
+        }
 
         // 处理动态新增/删除事件订阅器
         if (eventSource is EventSubscribeOperateSource subscribeOperateSource)
@@ -294,7 +300,10 @@ internal sealed class EventBusHostedService : BackgroundService
                     }
 
                     // 触发事件处理程序事件
-                    _eventPublisher.InvokeEvents(new(eventSource, true));
+                    _eventPublisher.InvokeEvents(new(eventSource, true)
+                    {
+                        Result = eventHandlerExecutingContext.Result
+                    });
                 }
                 catch (Exception ex)
                 {
@@ -316,7 +325,8 @@ internal sealed class EventBusHostedService : BackgroundService
                     // 触发事件处理程序事件
                     _eventPublisher.InvokeEvents(new(eventSource, false)
                     {
-                        Exception = ex
+                        Exception = ex,
+                        Result = eventHandlerExecutingContext.Result
                     });
                 }
                 finally

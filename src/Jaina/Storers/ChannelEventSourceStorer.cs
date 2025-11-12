@@ -61,8 +61,15 @@ internal sealed partial class ChannelEventSourceStorer : IEventSourceStorer
     /// <returns>事件源对象</returns>
     public async ValueTask<IEventSource> ReadAsync(CancellationToken cancellationToken)
     {
-        // 读取一条事件源
-        var eventSource = await _channel.Reader.ReadAsync(cancellationToken);
-        return eventSource;
+        try
+        {
+            // 读取一条事件源
+            return await _channel.Reader.ReadAsync(cancellationToken);
+        }
+        // 正常取消，服务停止时触发
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return null;
+        }
     }
 }

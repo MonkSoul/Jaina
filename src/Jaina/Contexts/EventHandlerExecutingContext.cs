@@ -30,4 +30,18 @@ public sealed class EventHandlerExecutingContext : EventHandlerContext
     /// 执行前时间
     /// </summary>
     public DateTime ExecutingTime { get; internal set; }
+
+    /// <summary>
+    /// 执行结果
+    /// </summary>
+    internal object Result { get; private set; }
+
+    /// <summary>
+    /// 设置执行结果
+    /// </summary>
+    /// <param name="result"></param>
+    public void SetResult(object result)
+    {
+        Result = result;
+    }
 }

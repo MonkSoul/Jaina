@@ -3,6 +3,7 @@
 // 此源代码遵循位于源代码树根目录中的 LICENSE 文件的许可证。
 
 using System.Reflection;
+using System.Text.Json;
 
 namespace Jaina;
 
@@ -50,4 +51,30 @@ public abstract class EventHandlerContext
     /// </summary>
     /// <remarks><remarks>如果是动态订阅，可能为 null</remarks></remarks>
     public EventSubscribeAttribute Attribute { get; }
+
+    /// <summary>
+    /// 获取负载数据
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    public T GetPayload<T>()
+    {
+        var rawPayload = Source.Payload;
+
+        if (rawPayload is null)
+        {
+            return default;
+        }
+        else if (rawPayload is JsonElement jsonElement)
+        {
+            return JsonSerializer.Deserialize<T>(jsonElement.GetRawText(), new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+        }
+        else
+        {
+            return (T)rawPayload;
+        }
+    }
 }
