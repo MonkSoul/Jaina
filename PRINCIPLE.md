@@ -39,7 +39,7 @@ foreach (var eventHandlerThatShouldRun in eventHandlersThatShouldRun)
 }
 ```
 
-5. 调用 `Handler` 属性时，抽象出 `EventHandlerContext` 上下文的概念，将本次事件消息所需信息进行包装，不限于事件源 `IEventSource`，执行事件，异常等。这样的好处是所有处理程序基于同一对象操作，对后续拓展维护也有极大好处。
+5. 调用 `Handler` 属性时，抽象出 `EventHandlerContext` 上下文的概念，将本次事件消息所需信息进行包装，不限于事件源 `IEventSource`，执行事件，异常等。这样的好处是所有处理程序基于同一对象操作，对后续扩展维护也有极大好处。
 
 ----
 
@@ -60,8 +60,8 @@ foreach (var eventHandlerThatShouldRun in eventHandlersThatShouldRun)
     |   |-- EventHandlerExecutingContext.cs               事件处理程序执行上下文（执行前）
     |-- Executors                                         执行器目录
     |   |-- IEventHandlerExecutor.cs                      事件处理程序执行器：可以对执行方法进行包装
-    |-- Extensions                                        拓展目录
-    |   |-- EventBusServiceCollectionExtensions.cs        事件总线服务拓展类
+    |-- Extensions                                        扩展目录
+    |   |-- EventBusServiceCollectionExtensions.cs        事件总线服务扩展类
     |-- HostedServices                                    主机服务目录
     |   |-- EventBusHostedService.cs                      事件总线服务中心：对事件源进行包装、分发、触发
     |-- Monitors                                          监视器目录

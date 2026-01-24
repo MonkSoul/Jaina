@@ -7,7 +7,7 @@ using System.Reflection;
 namespace Jaina;
 
 /// <summary>
-/// 事件总线拓展类
+/// 事件总线扩展类
 /// </summary>
 public static class EventBusExtensitions
 {

@@ -7,7 +7,7 @@ using Jaina;
 namespace Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
-/// EventBus 模块服务拓展
+/// EventBus 模块服务扩展
 /// </summary>
 public static class EventBusServiceCollectionExtensions
 {
