@@ -24,12 +24,12 @@ public sealed class EventSubscribeOperateSource : IEventSource
     /// <summary>
     /// 事件创建时间
     /// </summary>
-    public DateTime CreatedTime { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedTime { get; set; } = DateTime.Now;
 
     /// <summary>
     /// 消息是否只消费一次
     /// </summary>
-    public bool IsConsumOnce { get; set; }
+    public bool ConsumeOnce { get; set; }
 
     /// <summary>
     /// 取消任务 Token

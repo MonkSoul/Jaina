@@ -37,7 +37,7 @@ internal class EventBusFactory : IEventBusFactory
     public async Task Subscribe(string eventId, Func<EventHandlerExecutingContext, Task> handler, EventSubscribeAttribute attribute = default, MethodInfo handlerMethod = default, CancellationToken cancellationToken = default)
     {
         // 空检查
-        if (handler == null) throw new ArgumentNullException(nameof(handler));
+        ArgumentNullException.ThrowIfNull(handler);
 
         await _eventSourceStorer.WriteAsync(new EventSubscribeOperateSource
         {
@@ -58,7 +58,7 @@ internal class EventBusFactory : IEventBusFactory
     public async Task Unsubscribe(string eventId, CancellationToken cancellationToken = default)
     {
         // 空检查
-        if (eventId == null) throw new ArgumentNullException(nameof(eventId));
+        ArgumentNullException.ThrowIfNull(eventId);
 
         await _eventSourceStorer.WriteAsync(new EventSubscribeOperateSource
         {

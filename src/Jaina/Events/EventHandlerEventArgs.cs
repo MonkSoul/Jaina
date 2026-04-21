@@ -14,10 +14,12 @@ public sealed class EventHandlerEventArgs : EventArgs
     /// </summary>
     /// <param name="eventSource">事件源（事件承载对象）</param>
     /// <param name="success">任务处理委托调用结果</param>
-    public EventHandlerEventArgs(IEventSource eventSource, bool success)
+    /// <param name="runId">事件运行的唯一标识</param>
+    public EventHandlerEventArgs(IEventSource eventSource, bool success, string runId)
     {
         Source = eventSource;
         Status = success ? "SUCCESS" : "FAIL";
+        RunId = runId;
     }
 
     /// <summary>
@@ -39,4 +41,9 @@ public sealed class EventHandlerEventArgs : EventArgs
     /// 执行结果
     /// </summary>
     public object Result { get; internal set; }
+
+    /// <summary>
+    /// 事件运行的唯一标识
+    /// </summary>
+    public string RunId { get; }
 }

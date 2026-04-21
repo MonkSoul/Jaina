@@ -45,10 +45,7 @@ internal sealed partial class ChannelEventSourceStorer : IEventSourceStorer
     public async ValueTask WriteAsync(IEventSource eventSource, CancellationToken cancellationToken)
     {
         // 空检查
-        if (eventSource == default)
-        {
-            throw new ArgumentNullException(nameof(eventSource));
-        }
+        ArgumentNullException.ThrowIfNull(eventSource);
 
         // 写入存储器
         await _channel.Writer.WriteAsync(eventSource, cancellationToken);

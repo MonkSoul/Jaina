@@ -46,16 +46,29 @@ internal sealed partial class ChannelEventPublisher : IEventPublisher
     /// <returns><see cref="Task"/> 实例</returns>
     public Task PublishDelayAsync(IEventSource eventSource, long delay)
     {
-        // 创建新线程
-        Task.Factory.StartNew(async () =>
+        _ = SafeDelayPublishAsync(eventSource, delay);
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 安全延迟发布内部方法
+    /// </summary>
+    private async Task SafeDelayPublishAsync(IEventSource eventSource, long delay)
+    {
+        try
         {
             // 延迟 delay 毫秒
             await Task.Delay(TimeSpan.FromMilliseconds(delay), eventSource.CancellationToken);
 
             await _eventSourceStorer.WriteAsync(eventSource, eventSource.CancellationToken);
-        }, eventSource.CancellationToken);
-
-        return Task.CompletedTask;
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"EventBus delay publish failed: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -63,7 +76,7 @@ internal sealed partial class ChannelEventPublisher : IEventPublisher
     /// </summary>
     /// <param name="eventId">事件 Id</param>
     /// <param name="payload">事件承载（携带）数据</param>
-    /// <param name="cancellationToken"> 取消任务 Token</param>
+    /// <param name="cancellationToken">取消任务 Token</param>
     /// <returns></returns>
     public async Task PublishAsync(string eventId, object payload = default, CancellationToken cancellationToken = default)
     {
@@ -75,7 +88,7 @@ internal sealed partial class ChannelEventPublisher : IEventPublisher
     /// </summary>
     /// <param name="eventId">事件 Id</param>
     /// <param name="payload">事件承载（携带）数据</param>
-    /// <param name="cancellationToken"> 取消任务 Token</param>
+    /// <param name="cancellationToken">取消任务 Token</param>
     /// <returns></returns>
     public async Task PublishAsync(Enum eventId, object payload = default, CancellationToken cancellationToken = default)
     {
@@ -88,7 +101,7 @@ internal sealed partial class ChannelEventPublisher : IEventPublisher
     /// <param name="eventId">事件 Id</param>
     /// <param name="delay">延迟数（毫秒）</param>
     /// <param name="payload">事件承载（携带）数据</param>
-    /// <param name="cancellationToken"> 取消任务 Token</param>
+    /// <param name="cancellationToken">取消任务 Token</param>
     /// <returns><see cref="Task"/> 实例</returns>
     public async Task PublishDelayAsync(string eventId, long delay, object payload = default, CancellationToken cancellationToken = default)
     {
@@ -101,7 +114,7 @@ internal sealed partial class ChannelEventPublisher : IEventPublisher
     /// <param name="eventId">事件 Id</param>
     /// <param name="delay">延迟数（毫秒）</param>
     /// <param name="payload">事件承载（携带）数据</param>
-    /// <param name="cancellationToken"> 取消任务 Token</param>
+    /// <param name="cancellationToken">取消任务 Token</param>
     /// <returns><see cref="Task"/> 实例</returns>
     public async Task PublishDelayAsync(Enum eventId, long delay, object payload = default, CancellationToken cancellationToken = default)
     {

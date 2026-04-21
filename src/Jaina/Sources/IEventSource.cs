@@ -33,5 +33,5 @@ public interface IEventSource
     /// <summary>
     /// 消息是否只消费一次
     /// </summary>
-    bool IsConsumOnce { get; }
+    bool ConsumeOnce { get; }
 }

@@ -16,7 +16,7 @@ public sealed class EventBusOptionsBuilder
     /// <summary>
     /// 事件订阅者类型集合
     /// </summary>
-    private readonly List<Type> _eventSubscribers = new();
+    private readonly List<Type> _eventSubscribers = [];
 
     /// <summary>
     /// 事件发布者类型
@@ -41,7 +41,7 @@ public sealed class EventBusOptionsBuilder
     /// <summary>
     /// 事件重试策略类型集合
     /// </summary>
-    private readonly List<Type> _fallbackPolicyTypes = new();
+    private readonly List<Type> _fallbackPolicyTypes = [];
 
     /// <summary>
     /// 默认内置事件源存储器内存通道容量
@@ -163,7 +163,7 @@ public sealed class EventBusOptionsBuilder
     public EventBusOptionsBuilder ReplaceStorerOrFallback(Func<IEventSourceStorer> createStorer)
     {
         // 空检查
-        if (createStorer == null) throw new ArgumentNullException(nameof(createStorer));
+        ArgumentNullException.ThrowIfNull(createStorer);
 
         try
         {
@@ -187,7 +187,7 @@ public sealed class EventBusOptionsBuilder
     public EventBusOptionsBuilder ReplaceStorerOrFallback(Func<IServiceProvider, IEventSourceStorer> createStorer)
     {
         // 空检查
-        if (createStorer == null) throw new ArgumentNullException(nameof(createStorer));
+        ArgumentNullException.ThrowIfNull(createStorer);
 
         // 替换事件源存储器
         ReplaceStorer(serviceProvider =>

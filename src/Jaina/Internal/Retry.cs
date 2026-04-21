@@ -19,38 +19,6 @@ internal sealed class Retry
     /// <param name="exceptionTypes">异常类型,可多个</param>
     /// <param name="fallbackPolicy">重试失败回调</param>
     /// <param name="retryAction">重试时调用方法</param>
-    public static void Invoke(Action action
-        , int numRetries
-        , int retryTimeout = 1000
-        , bool finalThrow = true
-        , Type[] exceptionTypes = default
-        , Action<Exception> fallbackPolicy = default
-        , Action<int, int> retryAction = default)
-    {
-        if (action == null) throw new ArgumentNullException(nameof(action));
-
-        InvokeAsync(async () =>
-        {
-            action();
-            await Task.CompletedTask;
-        }, numRetries, retryTimeout, finalThrow, exceptionTypes, fallbackPolicy == null ? null
-        : async (ex) =>
-        {
-            fallbackPolicy?.Invoke(ex);
-            await Task.CompletedTask;
-        }, retryAction).GetAwaiter().GetResult();
-    }
-
-    /// <summary>
-    /// 重试有异常的方法，还可以指定特定异常
-    /// </summary>
-    /// <param name="action"></param>
-    /// <param name="numRetries">重试次数</param>
-    /// <param name="retryTimeout">重试间隔时间</param>
-    /// <param name="finalThrow">是否最终抛异常</param>
-    /// <param name="exceptionTypes">异常类型,可多个</param>
-    /// <param name="fallbackPolicy">重试失败回调</param>
-    /// <param name="retryAction">重试时调用方法</param>
     /// <returns><see cref="Task"/></returns>
     public static async Task InvokeAsync(Func<Task> action
         , int numRetries
@@ -60,7 +28,7 @@ internal sealed class Retry
         , Func<Exception, Task> fallbackPolicy = default
         , Action<int, int> retryAction = default)
     {
-        if (action == null) throw new ArgumentNullException(nameof(action));
+        ArgumentNullException.ThrowIfNull(action);
 
         // 如果重试次数小于或等于 0，则直接调用
         if (numRetries <= 0)

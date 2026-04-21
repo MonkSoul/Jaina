@@ -19,15 +19,18 @@ public abstract class EventHandlerContext
     /// <param name="properties">共享上下文数据</param>
     /// <param name="handlerMethod">触发的方法</param>
     /// <param name="attribute">订阅特性</param>
+    /// <param name="runId">事件运行的唯一标识</param>
     internal EventHandlerContext(IEventSource eventSource
         , IDictionary<object, object> properties
         , MethodInfo handlerMethod
-        , EventSubscribeAttribute attribute)
+        , EventSubscribeAttribute attribute
+        , string runId)
     {
         Source = eventSource;
         Properties = properties;
         HandlerMethod = handlerMethod;
         Attribute = attribute;
+        RunId = runId;
     }
 
     /// <summary>
@@ -53,6 +56,11 @@ public abstract class EventHandlerContext
     public EventSubscribeAttribute Attribute { get; }
 
     /// <summary>
+    /// 事件运行的唯一标识
+    /// </summary>
+    public string RunId { get; }
+
+    /// <summary>
     /// 获取负载数据
     /// </summary>
     /// <typeparam name="T"></typeparam>
@@ -67,7 +75,7 @@ public abstract class EventHandlerContext
         }
         else if (rawPayload is JsonElement jsonElement)
         {
-            return JsonSerializer.Deserialize<T>(jsonElement.GetRawText(), new JsonSerializerOptions
+            return JsonSerializer.Deserialize<T>(jsonElement.GetRawText(), new JsonSerializerOptions(JsonSerializerOptions.Default)
             {
                 PropertyNameCaseInsensitive = true
             });
