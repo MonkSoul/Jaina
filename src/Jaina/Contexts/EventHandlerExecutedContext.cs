@@ -19,12 +19,14 @@ public sealed class EventHandlerExecutedContext : EventHandlerContext
     /// <param name="handlerMethod">触发的方法</param>
     /// <param name="attribute">订阅特性</param>
     /// <param name="runId">事件运行的唯一标识</param>
+    /// <param name="cancellationToken">取消任务 Token</param>
     internal EventHandlerExecutedContext(IEventSource eventSource
         , IDictionary<object, object> properties
         , MethodInfo handlerMethod
         , EventSubscribeAttribute attribute
-        , string runId)
-        : base(eventSource, properties, handlerMethod, attribute, runId)
+        , string runId
+        , CancellationToken cancellationToken)
+        : base(eventSource, properties, handlerMethod, attribute, runId, cancellationToken)
     {
     }
 

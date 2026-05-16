@@ -293,7 +293,7 @@ public class JainaUnitTest
         var eventPublisher = services.GetService<IEventPublisher>();
 
         var cts = new CancellationTokenSource();
-        var eventSource = new ChannelEventSource("Unit:Publisher", 1, cts.Token);
+        var eventSource = new ChannelEventSource("Unit:Publisher", 1);
         await eventPublisher.PublishAsync(eventSource);
         cts.Cancel();
 

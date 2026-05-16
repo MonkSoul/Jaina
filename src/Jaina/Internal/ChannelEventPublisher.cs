@@ -32,10 +32,11 @@ internal sealed partial class ChannelEventPublisher : IEventPublisher
     /// 发布一条消息
     /// </summary>
     /// <param name="eventSource">事件源</param>
+    /// <param name="cancellationToken">取消任务 Token</param>
     /// <returns><see cref="Task"/> 实例</returns>
-    public async Task PublishAsync(IEventSource eventSource)
+    public async Task PublishAsync(IEventSource eventSource, CancellationToken cancellationToken = default)
     {
-        await _eventSourceStorer.WriteAsync(eventSource, eventSource.CancellationToken);
+        await _eventSourceStorer.WriteAsync(eventSource, cancellationToken);
     }
 
     /// <summary>
@@ -43,24 +44,25 @@ internal sealed partial class ChannelEventPublisher : IEventPublisher
     /// </summary>
     /// <param name="eventSource">事件源</param>
     /// <param name="delay">延迟数（毫秒）</param>
+    /// <param name="cancellationToken">取消任务 Token</param>
     /// <returns><see cref="Task"/> 实例</returns>
-    public Task PublishDelayAsync(IEventSource eventSource, long delay)
+    public Task PublishDelayAsync(IEventSource eventSource, long delay, CancellationToken cancellationToken = default)
     {
-        _ = SafeDelayPublishAsync(eventSource, delay);
+        _ = SafeDelayPublishAsync(eventSource, delay, cancellationToken);
         return Task.CompletedTask;
     }
 
     /// <summary>
     /// 安全延迟发布内部方法
     /// </summary>
-    private async Task SafeDelayPublishAsync(IEventSource eventSource, long delay)
+    private async Task SafeDelayPublishAsync(IEventSource eventSource, long delay, CancellationToken cancellationToken)
     {
         try
         {
             // 延迟 delay 毫秒
-            await Task.Delay(TimeSpan.FromMilliseconds(delay), eventSource.CancellationToken);
+            await Task.Delay(TimeSpan.FromMilliseconds(delay), cancellationToken);
 
-            await _eventSourceStorer.WriteAsync(eventSource, eventSource.CancellationToken);
+            await _eventSourceStorer.WriteAsync(eventSource, cancellationToken);
         }
         catch (OperationCanceledException)
         {
@@ -80,7 +82,7 @@ internal sealed partial class ChannelEventPublisher : IEventPublisher
     /// <returns></returns>
     public async Task PublishAsync(string eventId, object payload = default, CancellationToken cancellationToken = default)
     {
-        await PublishAsync(new ChannelEventSource(eventId, payload, cancellationToken));
+        await PublishAsync(new ChannelEventSource(eventId, payload), cancellationToken);
     }
 
     /// <summary>
@@ -92,7 +94,7 @@ internal sealed partial class ChannelEventPublisher : IEventPublisher
     /// <returns></returns>
     public async Task PublishAsync(Enum eventId, object payload = default, CancellationToken cancellationToken = default)
     {
-        await PublishAsync(new ChannelEventSource(eventId, payload, cancellationToken));
+        await PublishAsync(new ChannelEventSource(eventId, payload), cancellationToken);
     }
 
     /// <summary>
@@ -105,7 +107,7 @@ internal sealed partial class ChannelEventPublisher : IEventPublisher
     /// <returns><see cref="Task"/> 实例</returns>
     public async Task PublishDelayAsync(string eventId, long delay, object payload = default, CancellationToken cancellationToken = default)
     {
-        await PublishDelayAsync(new ChannelEventSource(eventId, payload, cancellationToken), delay);
+        await PublishDelayAsync(new ChannelEventSource(eventId, payload), delay, cancellationToken);
     }
 
     /// <summary>
@@ -118,7 +120,7 @@ internal sealed partial class ChannelEventPublisher : IEventPublisher
     /// <returns><see cref="Task"/> 实例</returns>
     public async Task PublishDelayAsync(Enum eventId, long delay, object payload = default, CancellationToken cancellationToken = default)
     {
-        await PublishDelayAsync(new ChannelEventSource(eventId, payload, cancellationToken), delay);
+        await PublishDelayAsync(new ChannelEventSource(eventId, payload), delay, cancellationToken);
     }
 
     /// <summary>

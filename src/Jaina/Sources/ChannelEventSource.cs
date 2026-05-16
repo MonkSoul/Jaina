@@ -40,18 +40,6 @@ public sealed class ChannelEventSource : IEventSource
     /// 构造函数
     /// </summary>
     /// <param name="eventId">事件 Id</param>
-    /// <param name="payload">事件承载（携带）数据</param>
-    /// <param name="cancellationToken">取消任务 Token</param>
-    public ChannelEventSource(string eventId, object payload, CancellationToken cancellationToken)
-        : this(eventId, payload)
-    {
-        CancellationToken = cancellationToken;
-    }
-
-    /// <summary>
-    /// 构造函数
-    /// </summary>
-    /// <param name="eventId">事件 Id</param>
     public ChannelEventSource(Enum eventId)
         : this(eventId.ParseToString())
     {
@@ -64,17 +52,6 @@ public sealed class ChannelEventSource : IEventSource
     /// <param name="payload">事件承载（携带）数据</param>
     public ChannelEventSource(Enum eventId, object payload)
         : this(eventId.ParseToString(), payload)
-    {
-    }
-
-    /// <summary>
-    /// 构造函数
-    /// </summary>
-    /// <param name="eventId">事件 Id</param>
-    /// <param name="payload">事件承载（携带）数据</param>
-    /// <param name="cancellationToken">取消任务 Token</param>
-    public ChannelEventSource(Enum eventId, object payload, CancellationToken cancellationToken)
-        : this(eventId.ParseToString(), payload, cancellationToken)
     {
     }
 
@@ -97,12 +74,4 @@ public sealed class ChannelEventSource : IEventSource
     /// 消息是否只消费一次
     /// </summary>
     public bool ConsumeOnce { get; set; }
-
-    /// <summary>
-    /// 取消任务 Token
-    /// </summary>
-    /// <remarks>用于取消本次消息处理</remarks>
-    [Newtonsoft.Json.JsonIgnore]
-    [System.Text.Json.Serialization.JsonIgnore]
-    public CancellationToken CancellationToken { get; set; }
 }

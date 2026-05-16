@@ -51,7 +51,6 @@ public static class EventBusServiceCollectionExtensions
                 serviceProvider
                 , eventBusOptionsBuilder.UseUtcTimestamp
                 , eventBusOptionsBuilder.FuzzyMatch
-                , eventBusOptionsBuilder.GCCollect
                 , eventBusOptionsBuilder.LogEnabled);
 
             // 订阅未察觉任务异常事件

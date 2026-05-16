@@ -32,14 +32,6 @@ public sealed class EventSubscribeOperateSource : IEventSource
     public bool ConsumeOnce { get; set; }
 
     /// <summary>
-    /// 取消任务 Token
-    /// </summary>
-    /// <remarks>用于取消本次消息处理</remarks>
-    [Newtonsoft.Json.JsonIgnore]
-    [System.Text.Json.Serialization.JsonIgnore]
-    public CancellationToken CancellationToken { get; set; }
-
-    /// <summary>
     /// 事件处理程序
     /// </summary>
     internal Func<EventHandlerExecutingContext, Task> Handler { get; set; }
