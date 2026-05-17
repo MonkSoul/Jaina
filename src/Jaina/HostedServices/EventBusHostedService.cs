@@ -136,16 +136,14 @@ internal sealed class EventBusHostedService : BackgroundService
         if (wrapper.Pattern == null)
         {
             // 精确匹配
-            _exactHandlers.AddOrUpdate(wrapper.EventId,
-                _ => [wrapper],
-                (_, list) =>
+            _exactHandlers.AddOrUpdate(wrapper.EventId, _ => [wrapper], (_, list) =>
+            {
+                lock (list)
                 {
-                    lock (list)
-                    {
-                        list.Add(wrapper);
-                    }
-                    return list;
-                });
+                    list.Add(wrapper);
+                }
+                return list;
+            });
         }
         else
         {
@@ -435,7 +433,6 @@ internal sealed class EventBusHostedService : BackgroundService
         // 处理动态删除
         else if (subscribeOperateSource.Operate == EventSubscribeOperates.Remove)
         {
-            // 删除所有匹配事件 Id 的处理程序
             // 精确匹配删除
             if (_exactHandlers.TryGetValue(eventId, out var list))
             {

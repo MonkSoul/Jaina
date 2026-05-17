@@ -26,14 +26,12 @@ internal sealed partial class ChannelEventSourceStorer : IEventSourceStorer
     /// <param name="capacity">管道最多能够处理多少消息，超过该容量进入等待写入</param>
     public ChannelEventSourceStorer(int capacity)
     {
-        // 配置通道，设置超出默认容量后进入等待
-        var boundedChannelOptions = new BoundedChannelOptions(capacity)
+        _channel = Channel.CreateBounded<IEventSource>(new BoundedChannelOptions(capacity)
         {
-            FullMode = BoundedChannelFullMode.Wait
-        };
-
-        // 创建有限容量通道
-        _channel = Channel.CreateBounded<IEventSource>(boundedChannelOptions);
+            FullMode = BoundedChannelFullMode.Wait,
+            SingleReader = true,
+            AllowSynchronousContinuations = true
+        });
     }
 
     /// <summary>
