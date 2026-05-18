@@ -1,7 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<Version>4.6.1</Version>
 		<Description>.NET 事件总线，简化项目、类库、线程、服务等之间的通信，代码更少，质量更好。</Description>
 	</PropertyGroup>
 
@@ -18,15 +17,6 @@
 	<ItemGroup Condition=" '$(TargetFramework)' == 'net10.0' ">
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
-	</ItemGroup>
-
-	<ItemGroup Condition=" '$(TargetFramework)' == 'net11.0' ">
-		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="11.0.0-preview.3.26207.106" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="11.0.0-preview.3.26207.106" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
 	</ItemGroup>
 
 </Project>
