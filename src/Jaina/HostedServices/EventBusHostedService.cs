@@ -56,7 +56,7 @@ internal sealed class EventBusHostedService : BackgroundService
     /// <summary>
     /// 追踪当前正在运行的事件处理任务
     /// </summary>
-    private readonly ConcurrentBag<Task> _runningTasks = [];
+    private readonly ConcurrentDictionary<Task, byte> _runningTasks = new();
 
     /// <summary>
     /// 构造函数
@@ -259,10 +259,10 @@ internal sealed class EventBusHostedService : BackgroundService
 
             // 执行事件处理程序并跟踪任务
             var task = ExecuteEventHandlerAsync(eventSource, eventHandler, properties, stoppingToken);
-            _runningTasks.Add(task);
+            _runningTasks.TryAdd(task, 0);
 
             // 任务完成后自动从集合中移除
-            _ = task.ContinueWith(t => _runningTasks.TryTake(out _), TaskContinuationOptions.ExecuteSynchronously);
+            _ = task.ContinueWith(t => _runningTasks.TryRemove(t, out _), TaskContinuationOptions.ExecuteSynchronously);
         }
     }
 
@@ -508,7 +508,7 @@ internal sealed class EventBusHostedService : BackgroundService
         // 等待正在运行的事件处理程序完成
         if (!_runningTasks.IsEmpty)
         {
-            var tasks = _runningTasks.ToArray();
+            var tasks = _runningTasks.Keys.ToArray();
             Log(LogLevel.Information, "Waiting for {Count} running event handlers to complete before shutdown...", [tasks.Length]);
 
             // 最多等待 1.5 秒
