@@ -354,10 +354,13 @@ internal sealed class EventBusHostedService : BackgroundService
             }
 
             // 触发事件处理程序事件
-            _eventPublisher.InvokeEvents(new(eventSource, true, runId)
+            if (_eventPublisher is IEventInvoker invoker)
             {
-                Result = eventHandlerExecutingContext.Result
-            });
+                invoker.InvokeEvents(new(eventSource, true, runId)
+                {
+                    Result = eventHandlerExecutingContext.Result
+                });
+            }
         }
         catch (Exception ex)
         {
@@ -377,11 +380,14 @@ internal sealed class EventBusHostedService : BackgroundService
             }
 
             // 触发事件处理程序事件
-            _eventPublisher.InvokeEvents(new(eventSource, false, runId)
+            if (_eventPublisher is IEventInvoker invoker)
             {
-                Exception = ex,
-                Result = eventHandlerExecutingContext.Result
-            });
+                invoker.InvokeEvents(new(eventSource, false, runId)
+                {
+                    Exception = ex,
+                    Result = eventHandlerExecutingContext.Result
+                });
+            }
         }
         finally
         {

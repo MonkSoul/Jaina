@@ -23,15 +23,6 @@ public interface IEventPublisher
     Task PublishAsync(IEventSource eventSource, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// 延迟发布一条消息
-    /// </summary>
-    /// <param name="eventSource">事件源</param>
-    /// <param name="delay">延迟数（毫秒）</param>
-    /// <param name="cancellationToken">取消任务 Token</param>
-    /// <returns><see cref="Task"/> 实例</returns>
-    Task PublishDelayAsync(IEventSource eventSource, long delay, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// 发布一条消息
     /// </summary>
     /// <param name="eventId">事件 Id</param>
@@ -48,6 +39,15 @@ public interface IEventPublisher
     /// <param name="cancellationToken">取消任务 Token</param>
     /// <returns></returns>
     Task PublishAsync(Enum eventId, object payload = default, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// 延迟发布一条消息
+    /// </summary>
+    /// <param name="eventSource">事件源</param>
+    /// <param name="delay">延迟数（毫秒）</param>
+    /// <param name="cancellationToken">取消任务 Token</param>
+    /// <returns><see cref="Task"/> 实例</returns>
+    Task PublishDelayAsync(IEventSource eventSource, long delay, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 延迟发布一条消息
@@ -70,8 +70,31 @@ public interface IEventPublisher
     Task PublishDelayAsync(Enum eventId, long delay, object payload = default, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// 触发事件处理程序事件
+    /// 延迟发布一条消息
     /// </summary>
-    /// <param name="args">事件参数</param>
-    void InvokeEvents(EventHandlerEventArgs args);
+    /// <param name="eventSource">事件源</param>
+    /// <param name="delay">延迟数</param>
+    /// <param name="cancellationToken">取消任务 Token</param>
+    /// <returns><see cref="Task"/> 实例</returns>
+    Task PublishDelayAsync(IEventSource eventSource, TimeSpan delay, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// 延迟发布一条消息
+    /// </summary>
+    /// <param name="eventId">事件 Id</param>
+    /// <param name="delay">延迟数</param>
+    /// <param name="payload">事件承载（携带）数据</param>
+    /// <param name="cancellationToken">取消任务 Token</param>
+    /// <returns><see cref="Task"/> 实例</returns>
+    Task PublishDelayAsync(string eventId, TimeSpan delay, object payload = default, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// 延迟发布一条消息
+    /// </summary>
+    /// <param name="eventId">事件 Id</param>
+    /// <param name="delay">延迟数</param>
+    /// <param name="payload">事件承载（携带）数据</param>
+    /// <param name="cancellationToken">取消任务 Token</param>
+    /// <returns><see cref="Task"/> 实例</returns>
+    Task PublishDelayAsync(Enum eventId, TimeSpan delay, object payload = default, CancellationToken cancellationToken = default);
 }

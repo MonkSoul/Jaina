@@ -7,7 +7,7 @@ namespace Jaina;
 /// <summary>
 /// 基于内存通道事件发布者（默认实现）
 /// </summary>
-internal sealed partial class ChannelEventPublisher : IEventPublisher
+internal sealed partial class ChannelEventPublisher : IEventPublisher, IEventInvoker
 {
     /// <summary>
     /// 事件处理程序事件
@@ -28,40 +28,75 @@ internal sealed partial class ChannelEventPublisher : IEventPublisher
         _eventSourceStorer = eventSourceStorer;
     }
 
-    /// <summary>
-    /// 发布一条消息
-    /// </summary>
-    /// <param name="eventSource">事件源</param>
-    /// <param name="cancellationToken">取消任务 Token</param>
-    /// <returns><see cref="Task"/> 实例</returns>
+    /// <inheritdoc/>
     public async Task PublishAsync(IEventSource eventSource, CancellationToken cancellationToken = default)
     {
         await _eventSourceStorer.WriteAsync(eventSource, cancellationToken);
     }
 
-    /// <summary>
-    /// 延迟发布一条消息
-    /// </summary>
-    /// <param name="eventSource">事件源</param>
-    /// <param name="delay">延迟数（毫秒）</param>
-    /// <param name="cancellationToken">取消任务 Token</param>
-    /// <returns><see cref="Task"/> 实例</returns>
+    /// <inheritdoc/>
+    public async Task PublishAsync(string eventId, object payload = default, CancellationToken cancellationToken = default)
+    {
+        await PublishAsync(new ChannelEventSource(eventId, payload), cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task PublishAsync(Enum eventId, object payload = default, CancellationToken cancellationToken = default)
+    {
+        await PublishAsync(new ChannelEventSource(eventId, payload), cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public Task PublishDelayAsync(IEventSource eventSource, long delay, CancellationToken cancellationToken = default)
+    {
+        _ = SafeDelayPublishAsync(eventSource, TimeSpan.FromMilliseconds(delay), cancellationToken);
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
+    public async Task PublishDelayAsync(string eventId, long delay, object payload = default, CancellationToken cancellationToken = default)
+    {
+        await PublishDelayAsync(new ChannelEventSource(eventId, payload), delay, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task PublishDelayAsync(Enum eventId, long delay, object payload = default, CancellationToken cancellationToken = default)
+    {
+        await PublishDelayAsync(new ChannelEventSource(eventId, payload), delay, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public Task PublishDelayAsync(IEventSource eventSource, TimeSpan delay, CancellationToken cancellationToken = default)
     {
         _ = SafeDelayPublishAsync(eventSource, delay, cancellationToken);
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc/>
+    public async Task PublishDelayAsync(string eventId, TimeSpan delay, object payload = null, CancellationToken cancellationToken = default)
+    {
+        await PublishDelayAsync(new ChannelEventSource(eventId, payload), delay, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task PublishDelayAsync(Enum eventId, TimeSpan delay, object payload = null, CancellationToken cancellationToken = default)
+    {
+        await PublishDelayAsync(new ChannelEventSource(eventId, payload), delay, cancellationToken);
+    }
+
     /// <summary>
     /// 安全延迟发布内部方法
     /// </summary>
-    private async Task SafeDelayPublishAsync(IEventSource eventSource, long delay, CancellationToken cancellationToken)
+    /// <param name="eventSource">事件源</param>
+    /// <param name="delay">延迟数</param>
+    /// <param name="cancellationToken">取消任务 Token</param>
+    /// <returns><see cref="Task"/> 实例</returns>
+    private async Task SafeDelayPublishAsync(IEventSource eventSource, TimeSpan delay, CancellationToken cancellationToken)
     {
         try
         {
             // 延迟 delay 毫秒
-            await Task.Delay(TimeSpan.FromMilliseconds(delay), cancellationToken);
-
+            await Task.Delay(delay, cancellationToken);
             await _eventSourceStorer.WriteAsync(eventSource, cancellationToken);
         }
         catch (OperationCanceledException)
@@ -73,61 +108,7 @@ internal sealed partial class ChannelEventPublisher : IEventPublisher
         }
     }
 
-    /// <summary>
-    /// 发布一条消息
-    /// </summary>
-    /// <param name="eventId">事件 Id</param>
-    /// <param name="payload">事件承载（携带）数据</param>
-    /// <param name="cancellationToken">取消任务 Token</param>
-    /// <returns></returns>
-    public async Task PublishAsync(string eventId, object payload = default, CancellationToken cancellationToken = default)
-    {
-        await PublishAsync(new ChannelEventSource(eventId, payload), cancellationToken);
-    }
-
-    /// <summary>
-    /// 发布一条消息
-    /// </summary>
-    /// <param name="eventId">事件 Id</param>
-    /// <param name="payload">事件承载（携带）数据</param>
-    /// <param name="cancellationToken">取消任务 Token</param>
-    /// <returns></returns>
-    public async Task PublishAsync(Enum eventId, object payload = default, CancellationToken cancellationToken = default)
-    {
-        await PublishAsync(new ChannelEventSource(eventId, payload), cancellationToken);
-    }
-
-    /// <summary>
-    /// 延迟发布一条消息
-    /// </summary>
-    /// <param name="eventId">事件 Id</param>
-    /// <param name="delay">延迟数（毫秒）</param>
-    /// <param name="payload">事件承载（携带）数据</param>
-    /// <param name="cancellationToken">取消任务 Token</param>
-    /// <returns><see cref="Task"/> 实例</returns>
-    public async Task PublishDelayAsync(string eventId, long delay, object payload = default, CancellationToken cancellationToken = default)
-    {
-        await PublishDelayAsync(new ChannelEventSource(eventId, payload), delay, cancellationToken);
-    }
-
-    /// <summary>
-    /// 延迟发布一条消息
-    /// </summary>
-    /// <param name="eventId">事件 Id</param>
-    /// <param name="delay">延迟数（毫秒）</param>
-    /// <param name="payload">事件承载（携带）数据</param>
-    /// <param name="cancellationToken">取消任务 Token</param>
-    /// <returns><see cref="Task"/> 实例</returns>
-    public async Task PublishDelayAsync(Enum eventId, long delay, object payload = default, CancellationToken cancellationToken = default)
-    {
-        await PublishDelayAsync(new ChannelEventSource(eventId, payload), delay, cancellationToken);
-    }
-
-    /// <summary>
-    /// 触发事件处理程序事件
-    /// </summary>
-    /// <param name="args">事件参数</param>
-    public void InvokeEvents(EventHandlerEventArgs args)
+    void IEventInvoker.InvokeEvents(EventHandlerEventArgs args)
     {
         try
         {
