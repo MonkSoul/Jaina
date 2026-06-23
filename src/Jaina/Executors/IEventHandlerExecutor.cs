@@ -15,6 +15,7 @@ public interface IEventHandlerExecutor
     /// <remarks>在这里可以实现超时控制，失败重试控制等等</remarks>
     /// <param name="context">事件处理程序执行前上下文</param>
     /// <param name="handler">事件处理程序</param>
+    /// <param name="cancellationToken">取消任务 Token</param>
     /// <returns><see cref="Task"/> 实例</returns>
-    Task ExecuteAsync(EventHandlerExecutingContext context, Func<EventHandlerExecutingContext, Task> handler);
+    Task ExecuteAsync(EventHandlerExecutingContext context, Func<EventHandlerExecutingContext, Task> handler, CancellationToken cancellationToken);
 }

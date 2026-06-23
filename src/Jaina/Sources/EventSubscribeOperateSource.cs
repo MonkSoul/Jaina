@@ -34,7 +34,7 @@ public sealed class EventSubscribeOperateSource : IEventSource
     /// <summary>
     /// 事件处理程序
     /// </summary>
-    internal Func<EventHandlerExecutingContext, Task> Handler { get; set; }
+    internal Func<EventHandlerExecutingContext, CancellationToken, Task> Handler { get; set; }
 
     /// <summary>
     /// 订阅特性

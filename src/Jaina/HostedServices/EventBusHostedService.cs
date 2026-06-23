@@ -103,8 +103,8 @@ internal sealed class EventBusHostedService : BackgroundService
             // 遍历所有事件订阅者处理方法
             foreach (var eventHandlerMethod in eventHandlerMethods)
             {
-                // 将方法转换成 Func<EventHandlerExecutingContext, Task> 委托
-                var handler = (Func<EventHandlerExecutingContext, Task>)eventHandlerMethod.CreateDelegate(typeof(Func<EventHandlerExecutingContext, Task>), eventSubscriber);
+                // 创建委托，自动适配泛型/非泛型、是否带 CancellationToken
+                var handler = CreateHandlerDelegate(eventHandlerMethod, eventSubscriber);
 
                 // 处理同一个事件处理程序支持多个事件 Id 情况
                 var eventSubscribeAttributes = eventHandlerMethod.GetCustomAttributes<EventSubscribeAttribute>(false);
@@ -125,6 +125,79 @@ internal sealed class EventBusHostedService : BackgroundService
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// 创建事件处理程序委托，自动适配参数签名
+    /// </summary>
+    /// <param name="method">处理程序方法</param>
+    /// <param name="target">目标对象</param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    private static Func<EventHandlerExecutingContext, CancellationToken, Task> CreateHandlerDelegate(MethodInfo method, object target)
+    {
+        // 获取方法参数信息
+        var parameters = method.GetParameters();
+
+        // 检查参数数量是否为 1 或 2
+        if (parameters.Length == 0 || parameters.Length > 2)
+        {
+            throw new InvalidOperationException($"Event handler '{method.Name}' must have 1 or 2 parameters.");
+        }
+
+        // 获取第一个参数类型和是否有 CancellationToken 参数
+        var paramType = parameters[0].ParameterType;
+        var hasCancellationToken = parameters.Length == 2 && parameters[1].ParameterType == typeof(CancellationToken);
+
+        // 非泛型单参数：EventHandlerExecutingContext
+        if (paramType == typeof(EventHandlerExecutingContext) && !hasCancellationToken)
+        {
+            var del = (Func<EventHandlerExecutingContext, Task>)method.CreateDelegate(typeof(Func<EventHandlerExecutingContext, Task>), target);
+            return (ctx, _) => del(ctx);
+        }
+
+        // 非泛型双参数：EventHandlerExecutingContext, CancellationToken
+        if (paramType == typeof(EventHandlerExecutingContext) && hasCancellationToken)
+        {
+            return (Func<EventHandlerExecutingContext, CancellationToken, Task>)method.CreateDelegate(typeof(Func<EventHandlerExecutingContext, CancellationToken, Task>), target);
+        }
+
+        // 泛型参数：EventHandlerExecutingContext<T> 或 EventHandlerExecutingContext<T>, CancellationToken
+        if (paramType.IsGenericType && paramType.GetGenericTypeDefinition() == typeof(EventHandlerExecutingContext<>))
+        {
+            var payloadType = paramType.GetGenericArguments()[0];
+
+            // 根据是否有 CancellationToken 选择不同的包装方法
+            var wrapMethodName = hasCancellationToken
+                ? nameof(EventHandlerExecutingContext<>.Wrap)
+                : nameof(EventHandlerExecutingContext<>.WrapSingle);
+
+            // 构造原始委托类型
+            Type rawDelegateType;
+            if (hasCancellationToken)
+            {
+                // Func<EventHandlerExecutingContext<T>, CancellationToken, Task>
+                rawDelegateType = typeof(Func<,,>).MakeGenericType(paramType, typeof(CancellationToken), typeof(Task));
+            }
+            else
+            {
+                // Func<EventHandlerExecutingContext<T>, Task>
+                rawDelegateType = typeof(Func<,>).MakeGenericType(paramType, typeof(Task));
+            }
+
+            // 创建原始委托
+            var rawDelegate = Delegate.CreateDelegate(rawDelegateType, target, method);
+
+            // 通过反射调用对应的包装方法
+            var wrapMethod = typeof(EventHandlerExecutingContext<>)
+                .MakeGenericType(payloadType)
+                .GetMethod(wrapMethodName, BindingFlags.NonPublic | BindingFlags.Static);
+
+            // 调用 Wrap 或 WrapSingle，返回最终的双参数委托
+            return (Func<EventHandlerExecutingContext, CancellationToken, Task>)wrapMethod.Invoke(null, [rawDelegate]);
+        }
+
+        throw new InvalidOperationException($"Event handler '{method.Name}' signature not supported.");
     }
 
     /// <summary>
@@ -306,7 +379,7 @@ internal sealed class EventBusHostedService : BackgroundService
         var cancellationToken = stoppingToken;
 
         // 创建执行前上下文
-        var eventHandlerExecutingContext = new EventHandlerExecutingContext(eventSource, properties, eventHandler.HandlerMethod, eventSubscribeAttribute, runId, cancellationToken)
+        var eventHandlerExecutingContext = new EventHandlerExecutingContext(eventSource, properties, eventHandler.HandlerMethod, eventSubscribeAttribute, runId)
         {
             ExecutingTime = UseUtcTimestamp ? DateTime.UtcNow : DateTime.Now
         };
@@ -322,7 +395,7 @@ internal sealed class EventBusHostedService : BackgroundService
             // 调用执行前监视器
             if (Monitor != null)
             {
-                await Monitor.OnExecutingAsync(eventHandlerExecutingContext);
+                await Monitor.OnExecutingAsync(eventHandlerExecutingContext, cancellationToken);
             }
 
             // 判断是否自定义了执行器
@@ -336,12 +409,12 @@ internal sealed class EventBusHostedService : BackgroundService
                 // 调用事件处理程序并配置出错执行重试
                 await Retry.InvokeAsync(async () =>
                 {
-                    await eventHandler.Handler!(eventHandlerExecutingContext);
+                    await eventHandler.Handler!(eventHandlerExecutingContext, cancellationToken);
                 }
                 , eventSubscribeAttribute?.NumRetries ?? 0
                 , eventSubscribeAttribute?.RetryTimeout ?? 1000
                 , exceptionTypes: eventSubscribeAttribute?.ExceptionTypes
-                , fallbackPolicy: fallbackPolicyService == null ? null : async (ex) => await fallbackPolicyService.CallbackAsync(eventHandlerExecutingContext, ex)
+                , fallbackPolicy: fallbackPolicyService == null ? null : async (ex) => await fallbackPolicyService.CallbackAsync(eventHandlerExecutingContext, ex, cancellationToken)
                 , retryAction: (total, times) =>
                 {
                     // 输出重试日志
@@ -350,7 +423,7 @@ internal sealed class EventBusHostedService : BackgroundService
             }
             else
             {
-                await Executor.ExecuteAsync(eventHandlerExecutingContext, eventHandler.Handler!);
+                await Executor.ExecuteAsync(eventHandlerExecutingContext, u => eventHandler.Handler(u, cancellationToken), cancellationToken);
             }
 
             // 触发事件处理程序事件
@@ -395,13 +468,13 @@ internal sealed class EventBusHostedService : BackgroundService
             if (Monitor != null)
             {
                 // 创建执行后上下文
-                var eventHandlerExecutedContext = new EventHandlerExecutedContext(eventSource, properties, eventHandler.HandlerMethod, eventSubscribeAttribute, runId, cancellationToken)
+                var eventHandlerExecutedContext = new EventHandlerExecutedContext(eventSource, properties, eventHandler.HandlerMethod, eventSubscribeAttribute, runId)
                 {
                     ExecutedTime = UseUtcTimestamp ? DateTime.UtcNow : DateTime.Now,
                     Exception = executionException
                 };
 
-                await Monitor.OnExecutedAsync(eventHandlerExecutedContext);
+                await Monitor.OnExecutedAsync(eventHandlerExecutedContext, cancellationToken);
             }
         }
     }

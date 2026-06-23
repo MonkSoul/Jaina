@@ -15,6 +15,7 @@ public interface IEventFallbackPolicy
     /// </summary>
     /// <param name="context"></param>
     /// <param name="ex"></param>
+    /// <param name="cancellationToken">取消任务 Token</param>
     /// <returns></returns>
-    Task CallbackAsync(EventHandlerExecutingContext context, Exception ex);
+    Task CallbackAsync(EventHandlerExecutingContext context, Exception ex, CancellationToken cancellationToken);
 }

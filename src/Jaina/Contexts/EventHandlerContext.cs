@@ -20,20 +20,17 @@ public abstract class EventHandlerContext
     /// <param name="handlerMethod">触发的方法</param>
     /// <param name="attribute">订阅特性</param>
     /// <param name="runId">事件运行的唯一标识</param>
-    /// <param name="cancellationToken">取消任务 Token</param>
     internal EventHandlerContext(IEventSource eventSource
         , IDictionary<object, object> properties
         , MethodInfo handlerMethod
         , EventSubscribeAttribute attribute
-        , string runId
-        , CancellationToken cancellationToken)
+        , string runId)
     {
         Source = eventSource;
         Properties = properties;
         HandlerMethod = handlerMethod;
         Attribute = attribute;
         RunId = runId;
-        CancellationToken = cancellationToken;
     }
 
     /// <summary>
@@ -62,11 +59,6 @@ public abstract class EventHandlerContext
     /// 事件运行的唯一标识
     /// </summary>
     public string RunId { get; }
-
-    /// <summary>
-    /// 取消任务 Token
-    /// </summary>
-    public CancellationToken CancellationToken { get; }
 
     /// <summary>
     /// 获取负载数据

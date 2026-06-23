@@ -23,6 +23,41 @@ public interface IEventBusFactory
     Task Subscribe(string eventId, Func<EventHandlerExecutingContext, Task> handler, EventSubscribeAttribute attribute = default, MethodInfo handlerMethod = default, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// 添加事件订阅者
+    /// </summary>
+    /// <param name="eventId">事件 Id</param>
+    /// <param name="handler">事件订阅委托</param>
+    /// <param name="attribute"><see cref="EventSubscribeAttribute"/> 特性对象</param>
+    /// <param name="handlerMethod"><see cref="MethodInfo"/> 对象</param>
+    /// <param name="cancellationToken">取消任务 Token</param>
+    /// <returns></returns>
+    Task Subscribe(string eventId, Func<EventHandlerExecutingContext, CancellationToken, Task> handler, EventSubscribeAttribute attribute = default, MethodInfo handlerMethod = default, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// 添加泛型事件订阅者
+    /// </summary>
+    /// <typeparam name="T">事件承载（携带）数据类型</typeparam>
+    /// <param name="eventId">事件 Id</param>
+    /// <param name="handler">泛型事件订阅委托</param>
+    /// <param name="attribute"><see cref="EventSubscribeAttribute"/> 特性对象</param>
+    /// <param name="handlerMethod"><see cref="MethodInfo"/> 对象</param>
+    /// <param name="cancellationToken">取消任务 Token</param>
+    /// <returns></returns>
+    Task Subscribe<T>(string eventId, Func<EventHandlerExecutingContext<T>, Task> handler, EventSubscribeAttribute attribute = default, MethodInfo handlerMethod = default, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// 添加泛型事件订阅者
+    /// </summary>
+    /// <typeparam name="T">事件承载（携带）数据类型</typeparam>
+    /// <param name="eventId">事件 Id</param>
+    /// <param name="handler">泛型事件订阅委托</param>
+    /// <param name="attribute"><see cref="EventSubscribeAttribute"/> 特性对象</param>
+    /// <param name="handlerMethod"><see cref="MethodInfo"/> 对象</param>
+    /// <param name="cancellationToken">取消任务 Token</param>
+    /// <returns></returns>
+    Task Subscribe<T>(string eventId, Func<EventHandlerExecutingContext<T>, CancellationToken, Task> handler, EventSubscribeAttribute attribute = default, MethodInfo handlerMethod = default, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// 删除事件订阅者
     /// </summary>
     /// <param name="eventId">事件 Id</param>

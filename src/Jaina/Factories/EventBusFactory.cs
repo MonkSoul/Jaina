@@ -39,14 +39,66 @@ internal class EventBusFactory : IEventBusFactory
         // 空检查
         ArgumentNullException.ThrowIfNull(handler);
 
-        await _eventSourceStorer.WriteAsync(new EventSubscribeOperateSource
-        {
-            SubscribeEventId = eventId,
-            Attribute = attribute,
-            Handler = handler,
-            HandlerMethod = handlerMethod,
-            Operate = EventSubscribeOperates.Append
-        }, cancellationToken);
+        Func<EventHandlerExecutingContext, CancellationToken, Task> wrapped = (ctx, _) => handler(ctx);
+
+        await WriteSubscribeOperate(eventId, wrapped, attribute, handlerMethod, cancellationToken);
+    }
+
+    /// <summary>
+    /// 添加事件订阅者
+    /// </summary>
+    /// <param name="eventId">事件 Id</param>
+    /// <param name="handler">事件订阅委托</param>
+    /// <param name="attribute"><see cref="EventSubscribeAttribute"/> 特性对象</param>
+    /// <param name="handlerMethod"><see cref="MethodInfo"/> 对象</param>
+    /// <param name="cancellationToken">取消任务 Token</param>
+    /// <returns></returns>
+    public async Task Subscribe(string eventId, Func<EventHandlerExecutingContext, CancellationToken, Task> handler, EventSubscribeAttribute attribute = default, MethodInfo handlerMethod = default, CancellationToken cancellationToken = default)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(handler);
+
+        await WriteSubscribeOperate(eventId, handler, attribute, handlerMethod, cancellationToken);
+    }
+
+    /// <summary>
+    /// 添加泛型事件订阅者
+    /// </summary>
+    /// <typeparam name="T">事件承载（携带）数据类型</typeparam>
+    /// <param name="eventId">事件 Id</param>
+    /// <param name="handler">泛型事件订阅委托</param>
+    /// <param name="attribute"><see cref="EventSubscribeAttribute"/> 特性对象</param>
+    /// <param name="handlerMethod"><see cref="MethodInfo"/> 对象</param>
+    /// <param name="cancellationToken">取消任务 Token</param>
+    /// <returns></returns>
+    public async Task Subscribe<T>(string eventId, Func<EventHandlerExecutingContext<T>, Task> handler, EventSubscribeAttribute attribute = default, MethodInfo handlerMethod = default, CancellationToken cancellationToken = default)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(handler);
+
+        var wrapped = EventHandlerExecutingContext<T>.Wrap((ctx, ct) => handler(ctx));
+
+        await WriteSubscribeOperate(eventId, wrapped, attribute, handlerMethod, cancellationToken);
+    }
+
+    /// <summary>
+    /// 添加泛型事件订阅者
+    /// </summary>
+    /// <typeparam name="T">事件承载（携带）数据类型</typeparam>
+    /// <param name="eventId">事件 Id</param>
+    /// <param name="handler">泛型事件订阅委托</param>
+    /// <param name="attribute"><see cref="EventSubscribeAttribute"/> 特性对象</param>
+    /// <param name="handlerMethod"><see cref="MethodInfo"/> 对象</param>
+    /// <param name="cancellationToken">取消任务 Token</param>
+    /// <returns></returns>
+    public async Task Subscribe<T>(string eventId, Func<EventHandlerExecutingContext<T>, CancellationToken, Task> handler, EventSubscribeAttribute attribute = default, MethodInfo handlerMethod = default, CancellationToken cancellationToken = default)
+    {
+        // 空检查
+        ArgumentNullException.ThrowIfNull(handler);
+
+        var wrapped = EventHandlerExecutingContext<T>.Wrap(handler);
+
+        await WriteSubscribeOperate(eventId, wrapped, attribute, handlerMethod, cancellationToken);
     }
 
     /// <summary>
@@ -64,6 +116,27 @@ internal class EventBusFactory : IEventBusFactory
         {
             SubscribeEventId = eventId,
             Operate = EventSubscribeOperates.Remove
+        }, cancellationToken);
+    }
+
+    /// <summary>
+    /// 将事件订阅委托写入事件源存储器
+    /// </summary>
+    /// <param name="eventId">事件 Id</param>
+    /// <param name="handler">事件订阅委托</param>
+    /// <param name="attribute"><see cref="EventSubscribeAttribute"/> 特性对象</param>
+    /// <param name="handlerMethod"><see cref="MethodInfo"/> 对象</param>
+    /// <param name="cancellationToken">取消任务 Token</param>
+    /// <returns></returns>
+    private async Task WriteSubscribeOperate(string eventId, Func<EventHandlerExecutingContext, CancellationToken, Task> handler, EventSubscribeAttribute attribute, MethodInfo handlerMethod, CancellationToken cancellationToken)
+    {
+        await _eventSourceStorer.WriteAsync(new EventSubscribeOperateSource
+        {
+            SubscribeEventId = eventId,
+            Attribute = attribute,
+            Handler = handler,
+            HandlerMethod = handlerMethod,
+            Operate = EventSubscribeOperates.Append
         }, cancellationToken);
     }
 }
